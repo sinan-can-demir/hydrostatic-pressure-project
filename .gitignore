@@ -5,3 +5,10 @@
 !.gitignore
 !README.md
 !roadmap.md
+!*.cpp
+!*.hpp
+
+!computation/
+!computation/**
+!visualization/
+!visualization/**
