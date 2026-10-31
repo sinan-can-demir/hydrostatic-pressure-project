@@ -21,7 +21,7 @@ Process: each design phase is a gate (documents in `docs/`); implementation is t
 | S4 | `WaterLoad`, `SelfWeight`, `ForceContribution`, pressure distribution | FR-05 to FR-07 |
 | S5 | Resultant, base contact, sliding, overturning report, criteria presets, checks, verdict, warnings; `analyze` / `Analyzer` | FR-08 to FR-16 |
 | S6 | JSON I/O, schema v1, golden files, CLI | FR-17 to FR-20 |
-| S7 | Hardening: traceability script, Clang build, coverage report, performance check | NFR-05, NFR-07, NFR-08 |
+| S7 | Hardening: traceability script, coverage report, performance check, N-04 negative build test, JSON schema document, P-05 property test | FR-19, NFR-06, NFR-07, NFR-08 |
 
 ## Later (not scheduled)
 - v1.x: uplift and tailwater (new `Load` implementations), cohesion in sliding.
