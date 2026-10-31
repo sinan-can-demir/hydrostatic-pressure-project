@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "input": {
+    "schema_version": 1,
+    "dam": {
+      "vertices_m": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          5.0,
+          0.0
+        ],
+        [
+          5.0,
+          10.0
+        ],
+        [
+          0.0,
+          10.0
+        ]
+      ]
+    },
+    "water_level_m": 10.0,
+    "friction_angle_deg": 35.0,
+    "load_condition": "usual",
+    "fluid": {
+      "density_kg_m3": 1000.0,
+      "gravity_m_s2": 9.81
+    },
+    "concrete": {
+      "unit_weight_n_m3": 23500.0
+    },
+    "allowable_bearing_pa": null,
+    "criteria": {
+      "usual": {
+        "zone": "middle_third",
+        "min_sliding_fs": 2.0
+      },
+      "unusual": {
+        "zone": "middle_half",
+        "min_sliding_fs": 1.7
+      },
+      "extreme": {
+        "zone": "within_base",
+        "min_sliding_fs": 1.3
+      }
+    },
+    "pressure_samples": null
+  },
+  "pressure": [
+    {
+      "x_m": 0.0,
+      "y_m": 0.0,
+      "pressure_pa": 98100.0,
+      "normal": [
+        1.0,
+        0.0
+      ]
+    },
+    {
+      "x_m": 0.0,
+      "y_m": 10.0,
+      "pressure_pa": 0.0,
+      "normal": [
+        1.0,
+        0.0
+      ]
+    }
+  ],
+  "contributions": [
+    {
+      "source": "water (horizontal)",
+      "fx_n_m": 490500.0,
+      "fy_n_m": 0.0,
+      "x_m": 0.0,
+      "y_m": 3.3333333333333335
+    },
+    {
+      "source": "self weight",
+      "fx_n_m": 0.0,
+      "fy_n_m": -1175000.0,
+      "x_m": 2.5,
+      "y_m": 5.0
+    }
+  ],
+  "resultant": {
+    "vertical_n_m": 1175000.0,
+    "horizontal_n_m": 490500.0,
+    "moment_about_toe_n_m_m": 1302500.0,
+    "x_from_toe_m": 1.1085106382978724,
+    "eccentricity_m": 1.3914893617021276,
+    "base_length_m": 5.0
+  },
+  "contact": {
+    "state": "partial",
+    "length_m": 3.3255319148936175,
+    "toe_pressure_pa": 706653.8707613562,
+    "heel_pressure_pa": 0.0
+  },
+  "sliding": {
+    "factor_of_safety": 1.677357507434065,
+    "no_driving_shear": false
+  },
+  "overturning": {
+    "terms": [
+      {
+        "source": "water (horizontal)",
+        "direction": "horizontal",
+        "force_n_m": 490500.0,
+        "arm_m": 3.3333333333333335,
+        "moment_n_m_m": -1635000.0,
+        "role": "overturning"
+      },
+      {
+        "source": "self weight",
+        "direction": "vertical",
+        "force_n_m": -1175000.0,
+        "arm_m": 2.5,
+        "moment_n_m_m": 2937500.0,
+        "role": "resisting"
+      }
+    ],
+    "resisting_moment_n_m_m": 2937500.0,
+    "overturning_moment_n_m_m": 1635000.0,
+    "ratio": 1.7966360856269112,
+    "unbounded": false
+  },
+  "checks": {
+    "location": {
+      "status": "fail",
+      "zone": "middle_third",
+      "lower_m": 1.6666666666666667,
+      "upper_m": 3.3333333333333335
+    },
+    "sliding": {
+      "status": "fail",
+      "factor_of_safety": 1.677357507434065,
+      "minimum": 2.0
+    },
+    "bearing": {
+      "status": "skipped",
+      "max_pressure_pa": 706653.8707613562,
+      "allowable_pa": null
+    }
+  },
+  "warnings": [
+    "uplift not modelled; results are unconservative for real dams"
+  ],
+  "verdict": "fail"
+}

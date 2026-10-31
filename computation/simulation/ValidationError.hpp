@@ -30,6 +30,7 @@ enum class ErrorCode {
     NonPositiveUnitWeight,
     NonPositiveAllowableBearing,
     NonPositiveSlidingFs,
+    PressureSamplesOutOfRange,
 };
 
 constexpr std::string_view to_string(ErrorCode code) {
@@ -53,6 +54,7 @@ constexpr std::string_view to_string(ErrorCode code) {
         case ErrorCode::NonPositiveUnitWeight: return "non_positive_unit_weight";
         case ErrorCode::NonPositiveAllowableBearing: return "non_positive_allowable_bearing";
         case ErrorCode::NonPositiveSlidingFs: return "non_positive_sliding_fs";
+        case ErrorCode::PressureSamplesOutOfRange: return "pressure_samples_out_of_range";
     }
     return "unknown";
 }

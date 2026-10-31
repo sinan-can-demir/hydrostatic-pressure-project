@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <optional>
 
 #include "Criteria.hpp"
@@ -40,6 +41,8 @@ struct Scenario {
     materials::Fluid fluid{};
     materials::Concrete concrete{};
     CriteriaSet criteria = CriteriaSet::usace();
+    // Number of evenly spaced pressure samples along the wetted face (FR-20); empty = the face vertices.
+    std::optional<std::size_t> pressure_samples = std::nullopt;
 };
 
 } // namespace model

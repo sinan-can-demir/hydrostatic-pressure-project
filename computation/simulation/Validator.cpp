@@ -184,6 +184,11 @@ void validate_parameters(const model::Scenario& s, Errors& errors) {
                       ErrorCode::NonPositiveSlidingFs, "the minimum sliding factor of safety");
     validate_positive(errors, s.criteria.extreme.min_sliding_fs, "criteria.extreme.min_sliding_fs",
                       ErrorCode::NonPositiveSlidingFs, "the minimum sliding factor of safety");
+
+    if (s.pressure_samples && (*s.pressure_samples < 2 || *s.pressure_samples > 100000)) {
+        add(errors, ErrorCode::PressureSamplesOutOfRange, "pressure_samples",
+            std::format("pressure_samples must be between 2 and 100000, got {}", *s.pressure_samples));
+    }
 }
 
 } // namespace

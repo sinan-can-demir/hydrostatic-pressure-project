@@ -420,3 +420,13 @@ TEST_CASE("P-04 a higher water level never decreases the horizontal force or ove
         last_m = r.overturning.overturning.n_m_per_m;
     }
 }
+
+TEST_CASE("I-05 pressure_samples gives that many evenly spaced samples in the result", "[FR-20][I-05]") {
+    Scenario s = ac1();
+    CHECK(run(s).pressure.samples.size() == 2);
+    s.pressure_samples = 11;
+    const Result r = run(s);
+    REQUIRE(r.pressure.samples.size() == 11);
+    CHECK_THAT(r.pressure.samples[3].position.y.meters, WithinRel(3.0, 1e-12));
+    CHECK(r.scenario.pressure_samples == 11);
+}

@@ -227,3 +227,20 @@ TEST_CASE("validation never throws, whatever the input", "[NFR-04][A-01]") {
     CHECK_NOTHROW(simulation::validate(scenario({P(kNaN, kNaN), P(kInf, 0), P(0, kNaN)}, kNaN, kNaN)));
     CHECK_NOTHROW(simulation::validate(scenario({P(0, 0), P(0, 0), P(0, 0)})));
 }
+
+// ---- pressure sample count (FR-20) ----------------------------------------
+
+TEST_CASE("pressure_samples must be between 2 and 100000 when given", "[FR-20][V-01]") {
+    model::Scenario s = ac1();
+    CHECK(simulation::validate(s).empty());
+    s.pressure_samples = 2;
+    CHECK(simulation::validate(s).empty());
+    s.pressure_samples = 100000;
+    CHECK(simulation::validate(s).empty());
+    for (const std::size_t bad : {std::size_t{0}, std::size_t{1}, std::size_t{100001}}) {
+        s.pressure_samples = bad;
+        const auto errors = simulation::validate(s);
+        REQUIRE(has(errors, ErrorCode::PressureSamplesOutOfRange));
+        CHECK(find(errors, ErrorCode::PressureSamplesOutOfRange)->path == "pressure_samples");
+    }
+}

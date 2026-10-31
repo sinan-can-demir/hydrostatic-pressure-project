@@ -99,7 +99,7 @@ PressureDistribution WaterLoad::pressure(const model::Scenario& scenario,
         const Pt a = chain[segment];
         const Pt b = chain[segment + 1];
         const double len = std::hypot(b.x - a.x, b.y - a.y);
-        return math::Vector2{units::Length((b.y - a.y) / len), units::Length(-(b.x - a.x) / len)};
+        return math::Vector2{units::Length((b.y - a.y) / len), units::Length((a.x - b.x) / len)};
     };
     auto sample_at = [&](Pt p, std::size_t segment) {
         return PressureSample{math::Point2{units::Length(p.x), units::Length(p.y)},

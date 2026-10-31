@@ -45,7 +45,7 @@ std::expected<Result, std::vector<ValidationError>> Analyzer::run(const model::S
                         check_bearing(contact, scenario.foundation.allowable_bearing)};
 
     return Result{scenario,
-                  WaterLoad{}.pressure(scenario),
+                  WaterLoad{}.pressure(scenario, scenario.pressure_samples),
                   contributions,
                   resultant,
                   contact,

@@ -6,12 +6,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(HP_BUILD_TESTS "Build the test suite" ON)
+option(HP_BUILD_IO "Build the JSON layer (hp_io) and the command-line tool" ON)
 
 # Strict warnings for our own targets only (never for fetched dependencies).
 # -ffp-contract=off keeps floating-point results independent of fused multiply-add (ADR-0007).
 function(hp_set_warnings target)
     target_compile_options(${target} PRIVATE
-        -Wall -Wextra -Wpedantic -Werror -ffp-contract=off)
+        -Wall -Wextra -Wpedantic -Werror -ffp-contract=off
+        # Catch2's TEST_CASE uses __COUNTER__, which Clang's pedantic mode flags as a C2y extension.
+        $<$<CXX_COMPILER_ID:Clang>:-Wno-c2y-extensions>)
 endfunction()
 
 # Header-only layers (dependencies point downward only, NFR-06).
@@ -66,6 +69,31 @@ endforeach()
 add_library(hp_header_check OBJECT ${HP_HEADER_CHECK_SOURCES})
 target_link_libraries(hp_header_check PRIVATE hp_core)
 hp_set_warnings(hp_header_check)
+
+# JSON reading/writing and the command line. nlohmann/json is confined to hp_io (ADR-0005);
+# hp_core never sees it, so the core builds and tests with -DHP_BUILD_IO=OFF.
+if(HP_BUILD_IO)
+    include(FetchContent)
+    FetchContent_Declare(nlohmann_json
+        GIT_REPOSITORY https://github.com/nlohmann/json.git
+        GIT_TAG        v3.12.0
+        GIT_SHALLOW    TRUE
+        SYSTEM)
+    FetchContent_MakeAvailable(nlohmann_json)
+
+    add_library(hp_io STATIC computation/io/Json.cpp)
+    target_link_libraries(hp_io PUBLIC hp_core PRIVATE nlohmann_json::nlohmann_json)
+    hp_set_warnings(hp_io)
+
+    add_library(hp_cli_lib STATIC apps/cli/Cli.cpp)
+    target_include_directories(hp_cli_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/apps/cli)
+    target_link_libraries(hp_cli_lib PUBLIC hp_io)
+    hp_set_warnings(hp_cli_lib)
+
+    add_executable(hp_cli apps/cli/main.cpp)
+    target_link_libraries(hp_cli PRIVATE hp_cli_lib)
+    hp_set_warnings(hp_cli)
+endif()
 
 if(HP_BUILD_TESTS)
     enable_testing()

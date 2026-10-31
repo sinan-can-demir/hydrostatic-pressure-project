@@ -21,6 +21,27 @@ target_link_libraries(hp_tests_core PRIVATE hp_core Catch2::Catch2WithMain)
 hp_set_warnings(hp_tests_core)
 catch_discover_tests(hp_tests_core PROPERTIES LABELS "fast")
 
+# --- JSON layer and command line (L4) ----------------------------------------
+# The tests inspect output structurally, so they link the JSON library too; only hp_io
+# (and these tests) ever include it.
+if(HP_BUILD_IO)
+    add_executable(hp_tests_io io/test_json.cpp)
+    target_link_libraries(hp_tests_io PRIVATE hp_io nlohmann_json::nlohmann_json Catch2::Catch2WithMain)
+    target_compile_definitions(hp_tests_io PRIVATE HP_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
+    hp_set_warnings(hp_tests_io)
+    catch_discover_tests(hp_tests_io PROPERTIES LABELS "fast")
+
+    add_executable(hp_tests_cli cli/test_cli.cpp)
+    target_link_libraries(hp_tests_cli PRIVATE hp_cli_lib nlohmann_json::nlohmann_json Catch2::Catch2WithMain)
+    target_compile_definitions(hp_tests_cli PRIVATE HP_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
+    hp_set_warnings(hp_tests_cli)
+    catch_discover_tests(hp_tests_cli PROPERTIES LABELS "fast")
+
+    # End to end: the real executable on the AC-1 document must exit 0 and report a verdict.
+    add_test(NAME cli_smoke COMMAND hp_cli ${CMAKE_CURRENT_SOURCE_DIR}/data/ac1_scenario.json)
+    set_tests_properties(cli_smoke PROPERTIES PASS_REGULAR_EXPRESSION "\"verdict\": \"fail\"" LABELS "fast")
+endif()
+
 # --- compile-fail tests (CF-01, NFR-02) ------------------------------------
 # Every forbidden operation lives in forbidden_ops.cpp behind its own CF_<NAME> macro.
 # The positive target compiles the file with no macro (proves includes and harness are valid);
