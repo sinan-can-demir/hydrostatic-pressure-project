@@ -15,7 +15,8 @@ add_executable(hp_tests_core
     model/test_materials_and_scenario.cpp
     model/test_dam_section.cpp
     simulation/test_validator.cpp
-    simulation/test_loads.cpp)
+    simulation/test_loads.cpp
+    simulation/test_stability.cpp)
 target_link_libraries(hp_tests_core PRIVATE hp_core Catch2::Catch2WithMain)
 hp_set_warnings(hp_tests_core)
 catch_discover_tests(hp_tests_core PROPERTIES LABELS "fast")

@@ -11,6 +11,7 @@
 namespace units {
 
 struct Angle {
+    bool operator==(const Angle&) const = default;
     double radians;
 
     constexpr explicit Angle(double r) : radians(r) {}

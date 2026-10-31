@@ -11,6 +11,7 @@
 namespace units {
 
 struct ForcePerWidth {
+    bool operator==(const ForcePerWidth&) const = default;
     double n_per_m;
 
     constexpr explicit ForcePerWidth(double f) : n_per_m(f) {}

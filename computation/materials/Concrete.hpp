@@ -10,6 +10,7 @@
 namespace materials {
 
 struct Concrete {
+    bool operator==(const Concrete&) const = default;
     units::UnitWeight unit_weight = units::UnitWeight(23500.0);
 };
 

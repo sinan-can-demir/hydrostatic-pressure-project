@@ -16,6 +16,7 @@
 namespace units {
 
 struct Density {
+    bool operator==(const Density&) const = default;
     double kg_per_m3;
 
     constexpr explicit Density(double rho) : kg_per_m3(rho) {}

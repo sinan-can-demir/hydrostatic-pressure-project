@@ -14,11 +14,13 @@ enum class LoadCondition { Usual, Unusual, Extreme };
 enum class ResultantZone { MiddleThird, MiddleHalf, WithinBase };
 
 struct CriteriaRow {
+    bool operator==(const CriteriaRow&) const = default;
     ResultantZone zone;
     double min_sliding_fs;
 };
 
 struct CriteriaSet {
+    bool operator==(const CriteriaSet&) const = default;
     CriteriaRow usual{ResultantZone::MiddleThird, 2.0};
     CriteriaRow unusual{ResultantZone::MiddleHalf, 1.7};
     CriteriaRow extreme{ResultantZone::WithinBase, 1.3};

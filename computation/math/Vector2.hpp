@@ -11,6 +11,7 @@
 namespace math {
 
 struct Vector2 {
+    bool operator==(const Vector2&) const = default;
     units::Length x;
     units::Length y;
 };

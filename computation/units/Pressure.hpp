@@ -19,6 +19,7 @@
 namespace units {
 
 struct Pressure {
+    bool operator==(const Pressure&) const = default;
     double pascals;
 
     constexpr explicit Pressure(double p) : pascals(p) {}

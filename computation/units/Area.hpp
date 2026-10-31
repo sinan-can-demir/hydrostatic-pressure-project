@@ -8,6 +8,7 @@
 namespace units {
 
 struct Area {
+    bool operator==(const Area&) const = default;
     double square_meters;
 
     constexpr explicit Area(double a) : square_meters(a) {}

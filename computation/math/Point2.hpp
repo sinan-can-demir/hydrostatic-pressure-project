@@ -11,6 +11,7 @@
 namespace math {
 
 struct Point2 {
+    bool operator==(const Point2&) const = default;
     units::Length x;
     units::Length y;
 };

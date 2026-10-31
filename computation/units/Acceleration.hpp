@@ -16,6 +16,7 @@
 namespace units {
 
 struct Acceleration {
+    bool operator==(const Acceleration&) const = default;
     double m_per_s2;
 
     constexpr explicit Acceleration(double g) : m_per_s2(g) {}

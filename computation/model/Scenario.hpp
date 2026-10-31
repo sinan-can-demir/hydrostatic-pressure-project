@@ -20,16 +20,19 @@ namespace model {
 
 // Elevation of the upstream water surface above the base.
 struct WaterLevel {
+    bool operator==(const WaterLevel&) const = default;
     units::Length elevation;
 };
 
 // Cohesion is fixed at zero in v1 (CON-05).
 struct Foundation {
+    bool operator==(const Foundation&) const = default;
     units::Angle friction_angle;
     std::optional<units::Pressure> allowable_bearing = std::nullopt;
 };
 
 struct Scenario {
+    bool operator==(const Scenario&) const = default;
     DamSection section;
     WaterLevel water_level;
     Foundation foundation;

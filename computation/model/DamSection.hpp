@@ -18,6 +18,7 @@
 namespace model {
 
 struct DamSection {
+    bool operator==(const DamSection&) const = default;
     std::vector<math::Point2> vertices;
 
     // Indices of the vertices lying on the base line y = 0 (within the geometric tolerance).

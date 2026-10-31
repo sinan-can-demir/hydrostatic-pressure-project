@@ -16,6 +16,7 @@
 namespace simulation {
 
 struct ForceContribution {
+    bool operator==(const ForceContribution&) const = default;
     units::ForcePerWidth fx;
     units::ForcePerWidth fy;
     math::Point2 point;

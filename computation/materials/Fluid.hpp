@@ -11,6 +11,7 @@
 namespace materials {
 
 struct Fluid {
+    bool operator==(const Fluid&) const = default;
     units::Density density = units::Density(1000.0);
     units::Acceleration gravity = units::Acceleration(9.81);
 };

@@ -8,6 +8,7 @@
 namespace units {
 
 struct MomentPerWidth {
+    bool operator==(const MomentPerWidth&) const = default;
     double n_m_per_m;
 
     constexpr explicit MomentPerWidth(double m) : n_m_per_m(m) {}

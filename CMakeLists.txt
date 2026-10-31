@@ -28,7 +28,10 @@ add_library(hp_core STATIC
     computation/model/DamSection.cpp
     computation/simulation/Validator.cpp
     computation/simulation/WaterLoad.cpp
-    computation/simulation/SelfWeight.cpp)
+    computation/simulation/SelfWeight.cpp
+    computation/simulation/Resultant.cpp
+    computation/simulation/Checks.cpp
+    computation/simulation/Analyzer.cpp)
 target_link_libraries(hp_core PUBLIC hp_math hp_units)
 hp_set_warnings(hp_core)
 
@@ -46,6 +49,10 @@ file(GLOB HP_HEADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/computation
      ${CMAKE_CURRENT_SOURCE_DIR}/computation/simulation/PressureDistribution.hpp
      ${CMAKE_CURRENT_SOURCE_DIR}/computation/simulation/SelfWeight.hpp
      ${CMAKE_CURRENT_SOURCE_DIR}/computation/simulation/WaterLoad.hpp
+     ${CMAKE_CURRENT_SOURCE_DIR}/computation/simulation/Resultant.hpp
+     ${CMAKE_CURRENT_SOURCE_DIR}/computation/simulation/Checks.hpp
+     ${CMAKE_CURRENT_SOURCE_DIR}/computation/simulation/Result.hpp
+     ${CMAKE_CURRENT_SOURCE_DIR}/computation/simulation/Analyzer.hpp
      ${CMAKE_CURRENT_SOURCE_DIR}/computation/materials/*.hpp
      ${CMAKE_CURRENT_SOURCE_DIR}/computation/model/*.hpp)
 set(HP_HEADER_CHECK_SOURCES "")

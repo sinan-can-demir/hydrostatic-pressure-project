@@ -16,6 +16,7 @@
 namespace units {
 
 struct Length {
+    bool operator==(const Length&) const = default;
     double meters;
 
     constexpr explicit Length(double m) : meters(m) {}

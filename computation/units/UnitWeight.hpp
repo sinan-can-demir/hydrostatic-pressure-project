@@ -11,6 +11,7 @@
 namespace units {
 
 struct UnitWeight {
+    bool operator==(const UnitWeight&) const = default;
     double n_per_m3;
 
     constexpr explicit UnitWeight(double w) : n_per_m3(w) {}

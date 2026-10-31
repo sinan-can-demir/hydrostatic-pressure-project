@@ -14,6 +14,7 @@
 namespace simulation {
 
 struct PressureSample {
+    bool operator==(const PressureSample&) const = default;
     math::Point2 position;
     units::Pressure pressure;
     // Unit vector normal to the face, pointing into the dam (the direction the water pushes).
@@ -22,6 +23,7 @@ struct PressureSample {
 
 // Ordered from the heel upward; empty when the face is dry.
 struct PressureDistribution {
+    bool operator==(const PressureDistribution&) const = default;
     std::vector<PressureSample> samples;
 };
 
