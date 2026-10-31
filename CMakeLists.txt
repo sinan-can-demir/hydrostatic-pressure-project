@@ -26,7 +26,9 @@ hp_set_warnings(hp_math)
 # Materials, scenario model, validation (and later the analyzer).
 add_library(hp_core STATIC
     computation/model/DamSection.cpp
-    computation/simulation/Validator.cpp)
+    computation/simulation/Validator.cpp
+    computation/simulation/WaterLoad.cpp
+    computation/simulation/SelfWeight.cpp)
 target_link_libraries(hp_core PUBLIC hp_math hp_units)
 hp_set_warnings(hp_core)
 
@@ -39,6 +41,11 @@ file(GLOB HP_HEADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/computation
      ${CMAKE_CURRENT_SOURCE_DIR}/computation/math/Polygon.hpp
      ${CMAKE_CURRENT_SOURCE_DIR}/computation/simulation/Validator.hpp
      ${CMAKE_CURRENT_SOURCE_DIR}/computation/simulation/ValidationError.hpp
+     ${CMAKE_CURRENT_SOURCE_DIR}/computation/simulation/ForceContribution.hpp
+     ${CMAKE_CURRENT_SOURCE_DIR}/computation/simulation/Load.hpp
+     ${CMAKE_CURRENT_SOURCE_DIR}/computation/simulation/PressureDistribution.hpp
+     ${CMAKE_CURRENT_SOURCE_DIR}/computation/simulation/SelfWeight.hpp
+     ${CMAKE_CURRENT_SOURCE_DIR}/computation/simulation/WaterLoad.hpp
      ${CMAKE_CURRENT_SOURCE_DIR}/computation/materials/*.hpp
      ${CMAKE_CURRENT_SOURCE_DIR}/computation/model/*.hpp)
 set(HP_HEADER_CHECK_SOURCES "")

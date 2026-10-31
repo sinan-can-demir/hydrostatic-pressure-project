@@ -31,16 +31,11 @@ Process: each design phase is a gate (documents in `docs/`); implementation is t
 - Hydrodynamic loads (waves, seepage, seismic); 3D.
 
 ## Status and where to resume
-Last updated 2026-10-31. S1 to S3 are done and committed; 69 tests pass in the default build and under AddressSanitizer + UBSan (`cmake --preset asan-ubsan`, `ctest --test-dir build-asan`).
+Last updated 2026-10-31. S1 to S4 are done and committed; 83 tests pass in the default build and under AddressSanitizer + UBSan (`cmake --preset asan-ubsan`, `ctest --test-dir build-asan`).
 
-**Next: S4.** Written test-first, against the reference cases in `docs/06-test-plan.md` section 3:
-1. `ForceContribution` (components in N/m, application point, source name).
-2. `Load` interface (ADR-0004) and `WaterLoad`: pressure p = rho g (Hw - y) on the upstream face, clipped at the water level, integrated in closed form per face segment (no quadrature). Tests L-01, L-02: AC-1 (Fx = 490 500 at 3.3333 m), AC-3 (Fy = 98 100 downward at x = 0.6667 m from the heel), AC-4 (Hw = 6: Fx = 176 580 at 2.0 m).
-3. `SelfWeight`: W = gamma * area at the centroid (L-03).
-4. `PressureDistribution` samples (FR-05, FR-20).
-5. Stub `Load` test proving the extension seam (L-04).
+S4 delivered `ForceContribution`, the `Load` interface, `WaterLoad` (closed-form per face segment, reported as "water (horizontal)" and "water (vertical)"; exactly-zero components are omitted), `SelfWeight`, and `PressureDistribution` samples via `WaterLoad::pressure()` (FR-05, FR-20). Tests L-01 to L-04 cover AC-1, AC-3, AC-4 and the extension seam. Sign convention: x downstream, y up, so water has positive `fx` and weight negative `fy`.
 
-Then S5 (resultant, contact, sliding, overturning report, checks, verdict, warnings, `analyze`), S6 (JSON I/O, CLI), S7 (hardening).
+**Next: S5**: resultant, contact, sliding, overturning report, checks, verdict, warnings and `analyze`. Then S6 (JSON I/O, CLI) and S7 (hardening).
 
 ## Open items
 - ADR-0007 (numeric tolerance and determinism) is still PROPOSED; ask for approval at the next gate.
