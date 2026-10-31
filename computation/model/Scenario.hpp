@@ -7,22 +7,16 @@
 #pragma once
 
 #include <optional>
-#include <vector>
 
 #include "Criteria.hpp"
+#include "DamSection.hpp"
 #include "materials/Concrete.hpp"
 #include "materials/Fluid.hpp"
-#include "math/Point2.hpp"
 #include "units/Angle.hpp"
 #include "units/Length.hpp"
 #include "units/Pressure.hpp"
 
 namespace model {
-
-// Counter-clockwise polygon with its base on y = 0.
-struct DamSection {
-    std::vector<math::Point2> vertices;
-};
 
 // Elevation of the upstream water surface above the base.
 struct WaterLevel {

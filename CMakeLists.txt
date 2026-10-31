@@ -19,12 +19,16 @@ add_library(hp_units INTERFACE)
 target_include_directories(hp_units INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/computation)
 target_compile_features(hp_units INTERFACE cxx_std_23)
 
-add_library(hp_math INTERFACE)
-target_link_libraries(hp_math INTERFACE hp_units)
+add_library(hp_math STATIC computation/math/Polygon.cpp)
+target_link_libraries(hp_math PUBLIC hp_units)
+hp_set_warnings(hp_math)
 
-# Materials and scenario model; becomes a compiled library when the analyzer arrives.
-add_library(hp_core INTERFACE)
-target_link_libraries(hp_core INTERFACE hp_math hp_units)
+# Materials, scenario model, validation (and later the analyzer).
+add_library(hp_core STATIC
+    computation/model/DamSection.cpp
+    computation/simulation/Validator.cpp)
+target_link_libraries(hp_core PUBLIC hp_math hp_units)
+hp_set_warnings(hp_core)
 
 # Compile every header as the first include of its own translation unit, twice,
 # to prove each header is self-contained and has an include guard.
@@ -32,6 +36,9 @@ file(GLOB HP_HEADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/computation
      ${CMAKE_CURRENT_SOURCE_DIR}/computation/units/*.hpp
      ${CMAKE_CURRENT_SOURCE_DIR}/computation/math/Point2.hpp
      ${CMAKE_CURRENT_SOURCE_DIR}/computation/math/Vector2.hpp
+     ${CMAKE_CURRENT_SOURCE_DIR}/computation/math/Polygon.hpp
+     ${CMAKE_CURRENT_SOURCE_DIR}/computation/simulation/Validator.hpp
+     ${CMAKE_CURRENT_SOURCE_DIR}/computation/simulation/ValidationError.hpp
      ${CMAKE_CURRENT_SOURCE_DIR}/computation/materials/*.hpp
      ${CMAKE_CURRENT_SOURCE_DIR}/computation/model/*.hpp)
 set(HP_HEADER_CHECK_SOURCES "")
