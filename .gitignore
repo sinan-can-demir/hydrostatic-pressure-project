@@ -1,14 +1,16 @@
-# ignore everything
-*
+# build output
+build/
+cmake-build-*/
 
-# unignore these files
-!.gitignore
-!README.md
-!roadmap.md
-!*.cpp
-!*.hpp
+# editor / OS
+.vscode/
+.idea/
+.cache/
+*.swp
+.DS_Store
 
-!computation/
-!computation/**
-!visualization/
-!visualization/**
+# compiled artifacts
+*.o
+*.a
+*.so
+*.out

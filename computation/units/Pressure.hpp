@@ -9,6 +9,8 @@
  * 
  */
 
+#pragma once
+
 #include "Density.hpp"
 #include "Acceleration.hpp"
 #include "Length.hpp"
