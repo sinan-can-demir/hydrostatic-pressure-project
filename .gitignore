@@ -1,6 +1,7 @@
 # build output
 build/
 cmake-build-*/
+build-*/
 
 # editor / OS
 .vscode/
