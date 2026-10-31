@@ -1,6 +1,6 @@
 # 06 Test Strategy and Verification Plan
 
-Status: DRAFT, awaiting Phase 5 gate review.
+Status: APPROVED (Phase 5 gate), see section 10.
 Inputs: `02-requirements.md`, `03-use-cases.md`, `04-domain-model.md`, `05-architecture.md`, ADR-0006 (Catch2), ADR-0007 (numeric policy).
 
 ## 1. Principles
@@ -140,7 +140,9 @@ All M-priority requirements are covered. FR-21 (won't) has no tests, except L-04
 ## 9. Exit criteria per Phase 6 slice
 A slice is complete when: its tests were written first and failed; all its tests pass; the whole suite still passes, including the sanitizer preset; the warnings-as-errors build is clean; the traceability script finds no uncovered M requirement for the slice; and the slice is committed with its test IDs in the message.
 
-## 10. Open questions for the gate
-1. **Golden-file tests (I-03):** stored expected JSON output files. They catch accidental format changes but must be updated on purpose when the schema changes. Recommended: yes.
-2. **Coverage target:** advisory 90 percent for the core, not a merge gate. Agreeable?
-3. **Reference cases:** are AC-1 to AC-6 enough, or do you want a textbook problem of your own as an extra case? A source you trust is the best oracle.
+## 10. Gate decisions (owner)
+| # | Decision | Notes |
+|---|----------|-------|
+| T1 | Golden-file tests approved. JSON is the v1 output format; a more efficient storage format may replace or complement it later. | Format code lives only in `hp_io` (ADR-0005), so a second serializer can be added behind the same `Result` type without touching the core. The golden files belong to the JSON serializer; a new format brings its own golden files. Recommendation: keep JSON as the human-readable interchange format even after a binary one exists. |
+| T2 | Coverage is advisory: a report showing which lines the tests executed, with a 90 percent goal for the core. It never blocks a commit. | Coverage only shows what code ran, not that it was checked correctly; the reference cases and properties are what prove correctness. |
+| T3 | No external oracle available; v1 relies on AC-1 to AC-6. | Residual risk: all oracles come from the same author and formulas. Mitigation: when a published textbook or USACE example is found, add it as AC-7 and rerun. |
