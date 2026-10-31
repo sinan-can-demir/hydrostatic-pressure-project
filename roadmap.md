@@ -16,7 +16,7 @@ Process: each design phase is a gate (documents in `docs/`); implementation is t
 | Slice | Content | Main requirements |
 |-------|---------|-------------------|
 | S1 | Test infrastructure (Catch2, CTest, sanitizer preset); unit types complete (`Area`, `UnitWeight`, `Angle`, `ForcePerWidth`, `MomentPerWidth`, `Pressure * Length`); compile-fail tests | NFR-02 |
-| S2 | `Point2`, `Vector2`, `Fluid`, `Concrete`, `Scenario` value types | FR-03 |
+| S2 (done) | `Point2`, `Vector2`, `Fluid`, `Concrete`, `Scenario` and its parts as plain data, `CriteriaSet` with the USACE Table 4-1 preset. `DamSection` is only the vertex list here; geometry and validation arrive in S3 | FR-03, FR-13 (data) |
 | S3 | `DamSection` geometry and `Validator` (all errors at once) | FR-01, FR-02, FR-04, NFR-10 |
 | S4 | `WaterLoad`, `SelfWeight`, `ForceContribution`, pressure distribution | FR-05 to FR-07 |
 | S5 | Resultant, base contact, sliding, overturning report, criteria presets, checks, verdict, warnings; `analyze` / `Analyzer` | FR-08 to FR-16 |

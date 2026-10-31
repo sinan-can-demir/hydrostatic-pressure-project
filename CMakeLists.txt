@@ -14,25 +14,37 @@ function(hp_set_warnings target)
         -Wall -Wextra -Wpedantic -Werror -ffp-contract=off)
 endfunction()
 
-# Header-only unit types.
+# Header-only layers (dependencies point downward only, NFR-06).
 add_library(hp_units INTERFACE)
 target_include_directories(hp_units INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/computation)
 target_compile_features(hp_units INTERFACE cxx_std_23)
 
-# Compile every unit header as the first include of its own translation unit, twice,
+add_library(hp_math INTERFACE)
+target_link_libraries(hp_math INTERFACE hp_units)
+
+# Materials and scenario model; becomes a compiled library when the analyzer arrives.
+add_library(hp_core INTERFACE)
+target_link_libraries(hp_core INTERFACE hp_math hp_units)
+
+# Compile every header as the first include of its own translation unit, twice,
 # to prove each header is self-contained and has an include guard.
-file(GLOB HP_UNIT_HEADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/computation
-     ${CMAKE_CURRENT_SOURCE_DIR}/computation/units/*.hpp)
+file(GLOB HP_HEADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/computation
+     ${CMAKE_CURRENT_SOURCE_DIR}/computation/units/*.hpp
+     ${CMAKE_CURRENT_SOURCE_DIR}/computation/math/Point2.hpp
+     ${CMAKE_CURRENT_SOURCE_DIR}/computation/math/Vector2.hpp
+     ${CMAKE_CURRENT_SOURCE_DIR}/computation/materials/*.hpp
+     ${CMAKE_CURRENT_SOURCE_DIR}/computation/model/*.hpp)
 set(HP_HEADER_CHECK_SOURCES "")
-foreach(header ${HP_UNIT_HEADERS})
+foreach(header ${HP_HEADERS})
+    get_filename_component(dir ${header} DIRECTORY)
     get_filename_component(name ${header} NAME_WE)
-    set(tu ${CMAKE_BINARY_DIR}/header_check/${name}.cpp)
+    set(tu ${CMAKE_BINARY_DIR}/header_check/${dir}_${name}.cpp)
     file(GENERATE OUTPUT ${tu} CONTENT "#include \"${header}\"\n#include \"${header}\"\n")
     list(APPEND HP_HEADER_CHECK_SOURCES ${tu})
 endforeach()
-add_library(hp_units_check OBJECT ${HP_HEADER_CHECK_SOURCES})
-target_link_libraries(hp_units_check PRIVATE hp_units)
-hp_set_warnings(hp_units_check)
+add_library(hp_header_check OBJECT ${HP_HEADER_CHECK_SOURCES})
+target_link_libraries(hp_header_check PRIVATE hp_core)
+hp_set_warnings(hp_header_check)
 
 if(HP_BUILD_TESTS)
     enable_testing()

@@ -9,6 +9,13 @@ target_link_libraries(hp_tests_units PRIVATE hp_units Catch2::Catch2WithMain)
 hp_set_warnings(hp_tests_units)
 catch_discover_tests(hp_tests_units PROPERTIES LABELS "fast")
 
+add_executable(hp_tests_core
+    math/test_point_vector.cpp
+    model/test_materials_and_scenario.cpp)
+target_link_libraries(hp_tests_core PRIVATE hp_core Catch2::Catch2WithMain)
+hp_set_warnings(hp_tests_core)
+catch_discover_tests(hp_tests_core PROPERTIES LABELS "fast")
+
 # --- compile-fail tests (CF-01, NFR-02) ------------------------------------
 # Every forbidden operation lives in forbidden_ops.cpp behind its own CF_<NAME> macro.
 # The positive target compiles the file with no macro (proves includes and harness are valid);

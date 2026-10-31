@@ -41,6 +41,8 @@ IDs are tags used in test names. Each row lists the behaviours to cover.
 |------|-----|-------|--------------|
 | Units | U-01 | `ForcePerWidth`, `MomentPerWidth`, `Area`, `UnitWeight`, `Angle` construct and expose correct SI values; arithmetic on like units; `hydrostatic()` gives 9810 Pa for 1 m of water | NFR-02 |
 | Units | U-02 | `Pressure * Length` returns `ForcePerWidth` with the right value (decision M1) | NFR-02, FR-06 |
+| Math | M-01 | `Point2`/`Vector2`: components, point minus point is a vector, vector arithmetic, cross product sign (CCW positive), dot product | FR-01, FR-02 |
+| Model | S-01 | `Fluid`, `Concrete` defaults and overrides; `Scenario` holds AC-1 inputs and applies documented defaults; `CriteriaSet::usace()` equals Table 4-1 | FR-03, FR-13, FR-14 |
 | Geometry | G-01 | Area and centroid of rectangle, triangle, trapezoid vs closed form | FR-07 |
 | Geometry | G-02 | Heel, toe, crest height, base length extracted correctly | FR-01 |
 | Geometry | G-03 | Orientation: CCW accepted, CW rejected with orientation message | FR-02, R2 |
@@ -104,9 +106,9 @@ Per ADR-0007 and NFR-01: reference comparisons use relative error 1e-9 (absolute
 ## 8. Traceability matrix (requirements to tests)
 | Requirement | Tests |
 |-------------|-------|
-| FR-01 | G-02, P-02, I-01 |
+| FR-01 | M-01, G-02, P-02, I-01 |
 | FR-02 | G-03, G-04, G-05, G-06, V-01 |
-| FR-03 | V-01, I-01 |
+| FR-03 | S-01, V-01, I-01 |
 | FR-04 | V-03 |
 | FR-05 | L-01 |
 | FR-06 | U-02, L-01, L-02, P-04 |
@@ -116,7 +118,7 @@ Per ADR-0007 and NFR-01: reference comparisons use relative error 1e-9 (absolute
 | FR-10 | C-01 |
 | FR-11 | R-03 |
 | FR-12 | C-02, C-05 |
-| FR-13 | C-03 |
+| FR-13 | S-01, C-03 |
 | FR-14 | C-04 |
 | FR-15 | W-01 |
 | FR-16 | A-01, A-02 |
