@@ -29,7 +29,7 @@ Notes on the source that affect the design:
 ## 3. Assumptions and constraints
 | ID | Statement |
 |----|-----------|
-| CON-01 | Implementation language C++20; core has no third-party dependency other than a JSON library confined to the I/O layer and a test framework. |
+| CON-01 | Implementation language C++23 (ADR-0001); core has no third-party dependency other than a JSON library confined to the I/O layer and a test framework. |
 | CON-02 | Rigid, horizontal foundation; base pressure varies linearly (with no tension) across the contact length. |
 | CON-03 | Constant water density and gravity; concrete has a single uniform unit weight. |
 | CON-04 | Hydrostatic loading only; no overtopping (water level must not exceed the crest). |
@@ -68,7 +68,7 @@ Notes on the source that affect the design:
 | NFR-02 | M | Unit safety | Public API uses strong unit types; nonsensical operations (e.g. Pressure * Length) do not compile. | Compile-fail tests. |
 | NFR-03 | M | Determinism | Identical input yields identical output on the same platform and compiler; no randomness, no time dependence, no uninitialised reads. | Repeat-run and sanitizer tests. |
 | NFR-04 | M | Error handling | No exceptions cross the public API; failures are returned as typed results with code and message. | API tests for each error path. |
-| NFR-05 | M | Portability | Builds with GCC and Clang (C++20) on Linux via CMake >= 3.20; warnings as errors. | CI or local build matrix. |
+| NFR-05 | M | Portability | Builds with GCC and Clang (C++23) on Linux via CMake >= 3.20; warnings as errors. | CI or local build matrix. |
 | NFR-06 | M | Architecture | The engine has no dependency on visualization or the CLI; dependencies point inward (units -> math -> model -> API). | CMake target graph check. |
 | NFR-07 | M | Testability | Every M-priority FR has at least one automated test; the matrix in Section 6 is kept current. | Traceability matrix review. |
 | NFR-08 | S | Performance | A section with <= 1000 vertices is analysed in < 10 ms on a typical desktop. | Benchmark test. |
