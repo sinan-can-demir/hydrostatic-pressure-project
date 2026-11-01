@@ -53,7 +53,7 @@ Notes on the source that affect the design:
 | FR-12 | M | The engine shall evaluate pass/fail for resultant location and sliding FS against thresholds for the chosen load condition. | Pass/fail flips exactly at the threshold in boundary tests. |
 | FR-13 | M | Thresholds shall be configurable, with a built-in preset equal to Table 4-1 (Section 2). | Preset values match Section 2; user override replaces them. |
 | FR-14 | S | The user may supply an allowable foundation bearing pressure; the engine reports whether the maximum base pressure is within it. | Pass/fail check; omitted input skips the check. |
-| FR-15 | M | Every result shall carry the warning "uplift not modelled; results are unconservative for real dams" (D3). | Warning present in JSON, CLI text and library result. |
+| FR-15 | M | Every result shall carry the warning "uplift not modelled; results are unconservative for real dams" (D3). From v1.1, a scenario that requests uplift carries a model statement ("uplift modelled ... assuming the whole base is in compression") instead; all other scenarios keep the original warning unchanged. | Warning present in JSON, CLI text and library result (W-01); replaced when uplift is modelled (W-01a). |
 | FR-16 | M | The library API shall expose the whole analysis as a pure function from a Scenario value to a Result value, with no I/O or global state. | Callable from a test without files or a CLI. |
 | FR-17 | M | The CLI shall read a JSON scenario (file or stdin) and write JSON results (file or stdout). | Round-trip of AC-1 scenario produces expected JSON. |
 | FR-18 | M | The CLI shall exit with 0 on success, a non-zero code on invalid input or analysis error, and print the error to stderr. | Exit codes are covered by CLI tests. |
@@ -62,6 +62,11 @@ Notes on the source that affect the design:
 | FR-21 | W | Uplift, tailwater, sediment, ice, hydrodynamic and seismic loads, cohesion, overtopping, non-horizontal bases, multi-material sections. | Listed as non-goals; the API leaves extension points (Phase 4). |
 | FR-22 | M | (v1.1, docs/09) The user may specify a tailwater depth H2 (m above base), 0 <= H2 <= Hw; omitted means none. Invalid values (negative, non-finite, above Hw) and a downstream face that drops going up from the toe are rejected, each with a distinct error code. | Boundary tests; H2 = 0 equals the no-tailwater result (checked in U2, TW-03). |
 | FR-23 | M | (v1.1, docs/09) The engine shall compute the hydrostatic load of tailwater on the wetted downstream face with the same closed-form method as the upstream water load, reported as "tailwater (horizontal)" and "tailwater (vertical)" (exactly-zero components omitted). | Vertical face: Fx = 1/2 rho g H2^2 acting towards the upstream side at H2/3 above the base; sloping face: Fy equals the weight of water above the face; AU-2 without uplift. |
+| FR-24 | M | (v1.1, docs/09) When the scenario has an `uplift` request, the engine shall compute base uplift from EM 1110-2-2200 para. 3-3.d: heads H1 at the heel and H2 (tailwater, or 0) at the toe; without drains a straight line; with drains the drain-line head H3 = K (H1 - H') (L - X) / L + H' (K = 1 - E; H' = gallery elevation if above the tailwater, else the tailwater), and for drains within 0.05 H1 of the heel (Fig. 3-3) one straight line from H3 = K (H1 - H') + H' at the heel to H2 at the toe. It returns one upward force "uplift" at the centroid of the diagram. | AU-1, AU-2, AU-3, AU-5 values; gallery above and below the tailwater; threshold X = 0.05 H1 selects the two rules; each load mutation is caught. |
+| FR-25 | M | Drain effectiveness has no default: drains require E. The engine never changes E; E outside [0.25, 0.50] adds a warning, E above 0.67 a stronger warning naming the standard's limit (validation of ranges: U1). | Warnings at 0.24, 0.51, 0.67 (range) and 0.68 (limit); none at 0.25, 0.30, 0.50. |
+| FR-26 | M | Uplift and tailwater flow through the existing pipeline (resultant, contact, sliding, overturning report, checks) with no change to the downstream formulas; the sliding check uses the reduced V. | AU-1 to AU-3, AU-5 through `analyze`: V, H, M, x_R, FS. |
+| FR-27 | S | The overturning report lists the uplift and tailwater terms with force, arm, moment and role. | Uplift reported as an overturning vertical term; tailwater as resisting. |
+| FR-28 | M | If uplift is modelled and the base is not fully in compression, the result carries a warning that the uplift assumes full contact and is unconservative (D-U1). If V <= 0 after uplift, the existing no-contact path applies and the verdict is fail. | Warning present for partial contact and for U > W; absent for full contact. |
 
 ## 5. Non-functional requirements
 | ID | Pri | Category | Requirement | Verification |
@@ -77,6 +82,7 @@ Notes on the source that affect the design:
 | NFR-09 | S | Transparency | Each output is documented with its formula, and results include intermediate values (forces, arms, moments) so a user can hand-verify them. | Doc review; AC-1 intermediate values present. |
 | NFR-10 | S | Robustness | The engine rejects NaN, infinite and absurd inputs (e.g. coordinates beyond 1e6 m) instead of propagating them. | Fuzz or table tests on invalid input. |
 | NFR-11 | C | Maintainability | Public headers carry short comments for units and conventions; clang-tidy/clang-format configuration is committed. | Config present. |
+| NFR-12 | M | Compatibility | (v1.1) A scenario without the new inputs gives exactly the v1 result: same numbers, same contributions, same warning. | Existing golden file `tests/data/ac1_result.json` unchanged; N-05. |
 
 ## 6. Reference acceptance case AC-1 (hand calculation)
 Rectangular dam, B = 5 m, H = 10 m, vertical upstream face, Hw = 10 m, rho = 1000 kg/m3, g = 9.81 m/s2, gamma = 23 500 N/m3, phi = 35 degrees.
@@ -107,7 +113,7 @@ Expected checks: the usual case fails on resultant location (1.1085 m < 1.6667 m
 | FR-05 to FR-07 | S1, S2 | Textbook hydrostatics | analytic tests (rectangle, triangle, trapezoid) |
 | FR-08 to FR-12 | S2 | EM 1110-2-2200 Table 4-1, Eqs. 4-1, 4-3 | AC-1 and boundary tests |
 | FR-13, FR-14 | S2 | Configurable standards | threshold tests |
-| FR-15 | S2 | D3 mitigation | warning-presence tests |
+| FR-15 | M | Every result shall carry the warning "uplift not modelled; results are unconservative for real dams" (D3). From v1.1, a scenario that requests uplift carries a model statement ("uplift modelled ... assuming the whole base is in compression") instead; all other scenarios keep the original warning unchanged. | Warning present in JSON, CLI text and library result (W-01); replaced when uplift is modelled (W-01a). |
 | FR-16 to FR-19 | S3, S4 | Library and CLI deliverable (D5) | API and CLI tests |
 | NFR-01 to NFR-04 | S2, S3 | Trust and API quality | numerical, compile-fail, determinism tests |
 | NFR-05 to NFR-07 | S4 | Maintainability | build matrix, CMake graph, matrix review |

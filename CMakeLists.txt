@@ -34,6 +34,7 @@ add_library(hp_core STATIC
     computation/simulation/FaceLoad.cpp
     computation/simulation/WaterLoad.cpp
     computation/simulation/TailwaterLoad.cpp
+    computation/simulation/UpliftLoad.cpp
     computation/simulation/SelfWeight.cpp
     computation/simulation/Resultant.cpp
     computation/simulation/Checks.cpp
