@@ -179,8 +179,7 @@ TEST_CASE("R-03 AC-2 ratio", "[FR-11][R-03]") {
 
 TEST_CASE("R-03 the vertical water component on an inclined face is its own resisting term",
           "[FR-11][R-03]") {
-    const OverturningReport& o =
-        run(scenario({P(0, 0), P(5, 0), P(5, 10), P(2, 10)}, 10.0)).overturning;
+    const OverturningReport& o = run(scenario({P(0, 0), P(5, 0), P(5, 10), P(2, 10)}, 10.0)).overturning;
     REQUIRE(o.terms.size() == 3);
     CHECK(o.terms[1].source == "water (vertical)");
     CHECK(o.terms[1].direction == ForceDirection::Vertical);
@@ -261,18 +260,19 @@ TEST_CASE("C-02 location boundaries flip exactly at the threshold", "[FR-12][C-0
     const Length base(5.0);
     const Contact full{ContactState::Full, base, Pressure(1.0), Pressure(1.0)};
     auto resultant_at = [&](double x) {
-        return Resultant{ForcePerWidth(1.0), ForcePerWidth(0.0), MomentPerWidth(x), Length(x),
-                         Length(2.5 - x), base};
+        return Resultant{ForcePerWidth(1.0), ForcePerWidth(0.0), MomentPerWidth(x),
+                         Length(x),          Length(2.5 - x),    base};
     };
     const double third = 5.0 / 3.0;
     const double two_thirds = 2.0 * 5.0 / 3.0;
     using model::ResultantZone;
     CHECK(check_location(resultant_at(third), full, ResultantZone::MiddleThird).status == CheckStatus::Pass);
-    CHECK(check_location(resultant_at(two_thirds), full, ResultantZone::MiddleThird).status == CheckStatus::Pass);
+    CHECK(check_location(resultant_at(two_thirds), full, ResultantZone::MiddleThird).status ==
+          CheckStatus::Pass);
     CHECK(check_location(resultant_at(std::nextafter(third, 0.0)), full, ResultantZone::MiddleThird).status ==
           CheckStatus::Fail);
-    CHECK(check_location(resultant_at(std::nextafter(two_thirds, 5.0)), full, ResultantZone::MiddleThird).status ==
-          CheckStatus::Fail);
+    CHECK(check_location(resultant_at(std::nextafter(two_thirds, 5.0)), full, ResultantZone::MiddleThird)
+              .status == CheckStatus::Fail);
     CHECK(check_location(resultant_at(1.25), full, ResultantZone::MiddleHalf).status == CheckStatus::Pass);
     CHECK(check_location(resultant_at(std::nextafter(1.25, 0.0)), full, ResultantZone::MiddleHalf).status ==
           CheckStatus::Fail);
@@ -287,7 +287,7 @@ TEST_CASE("C-02 sliding boundary flips exactly at the minimum", "[FR-12][C-02]")
 
 TEST_CASE("C-03 a user override of the criteria replaces the preset", "[FR-13][C-03]") {
     Scenario s = ac1();
-    s.criteria.usual.min_sliding_fs = 1.5;  // AC-1 FS is 1.6774
+    s.criteria.usual.min_sliding_fs = 1.5; // AC-1 FS is 1.6774
     CHECK(run(s).checks.sliding.status == CheckStatus::Pass);
     s.criteria.usual.min_sliding_fs = 1.7;
     CHECK(run(s).checks.sliding.status == CheckStatus::Fail);
@@ -318,9 +318,11 @@ TEST_CASE("C-05 verdict: any failed check fails, skipped checks do not", "[FR-12
     const SlidingCheck pass_slide{CheckStatus::Pass, 3.0, 2.0};
     const BearingCheck skipped{CheckStatus::Skipped, Pressure(0.0), std::nullopt};
     CHECK(make_verdict(Checks{pass_loc, pass_slide, skipped}) == Verdict::Pass);
-    CHECK(make_verdict(Checks{pass_loc, SlidingCheck{CheckStatus::Fail, 1.0, 2.0}, skipped}) == Verdict::Fail);
-    CHECK(make_verdict(Checks{pass_loc, pass_slide,
-                              BearingCheck{CheckStatus::Fail, Pressure(2.0), Pressure(1.0)}}) == Verdict::Fail);
+    CHECK(make_verdict(Checks{pass_loc, SlidingCheck{CheckStatus::Fail, 1.0, 2.0}, skipped}) ==
+          Verdict::Fail);
+    CHECK(make_verdict(
+              Checks{pass_loc, pass_slide, BearingCheck{CheckStatus::Fail, Pressure(2.0), Pressure(1.0)}}) ==
+          Verdict::Fail);
 }
 
 // ---- W-01, A-01, A-02, L-04 ----------------------------------------------------------------
@@ -334,7 +336,7 @@ TEST_CASE("W-01 the uplift warning is in every result, failed ones included", "[
 }
 
 TEST_CASE("A-01 an invalid scenario returns errors and does not throw", "[FR-16][NFR-04][A-01]") {
-    Scenario s = ac1(11.0);  // water above the crest
+    Scenario s = ac1(11.0); // water above the crest
     CHECK_NOTHROW(analyze(s));
     const auto r = analyze(s);
     REQUIRE_FALSE(r.has_value());
@@ -380,7 +382,8 @@ TEST_CASE("L-04 a stub Load added to the Analyzer shifts the resultant", "[ADR-0
 
 // ---- properties ----------------------------------------------------------------------------
 
-TEST_CASE("P-01 scaling all lengths by k scales forces by k^2 and leaves ratios unchanged", "[NFR-01][P-01]") {
+TEST_CASE("P-01 scaling all lengths by k scales forces by k^2 and leaves ratios unchanged",
+          "[NFR-01][P-01]") {
     const double k = 3.0;
     const Result a = run(ac2());
     const Result b = run(scenario({P(0, 0), P(7 * k, 0), P(0, 10 * k)}, 10.0 * k));
@@ -394,7 +397,8 @@ TEST_CASE("P-01 scaling all lengths by k scales forces by k^2 and leaves ratios 
 TEST_CASE("P-02 a cyclic rotation of the vertex list gives the same result", "[FR-01][P-02]") {
     const Result a = run(scenario({P(0, 0), P(5, 0), P(5, 10), P(2, 10)}, 8.0));
     const Result b = run(scenario({P(5, 10), P(2, 10), P(0, 0), P(5, 0)}, 8.0));
-    CHECK_THAT(b.resultant.moment_about_toe.n_m_per_m, WithinRel(a.resultant.moment_about_toe.n_m_per_m, 1e-9));
+    CHECK_THAT(b.resultant.moment_about_toe.n_m_per_m,
+               WithinRel(a.resultant.moment_about_toe.n_m_per_m, 1e-9));
     CHECK_THAT(b.resultant.vertical.n_per_m, WithinRel(a.resultant.vertical.n_per_m, 1e-9));
     CHECK_THAT(*b.sliding.factor_of_safety, WithinRel(*a.sliding.factor_of_safety, 1e-9));
     CHECK(b.verdict == a.verdict);

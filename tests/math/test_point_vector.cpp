@@ -22,8 +22,10 @@ TEST_CASE("point and vector store their components", "[FR-01][M-01]") {
 }
 
 TEST_CASE("point minus point is a vector, point plus vector is a point", "[FR-01][M-01]") {
-    static_assert(std::is_same_v<decltype(Point2{Length(0), Length(0)} - Point2{Length(0), Length(0)}), Vector2>);
-    static_assert(std::is_same_v<decltype(Point2{Length(0), Length(0)} + Vector2{Length(0), Length(0)}), Point2>);
+    static_assert(
+        std::is_same_v<decltype(Point2{Length(0), Length(0)} - Point2{Length(0), Length(0)}), Vector2>);
+    static_assert(
+        std::is_same_v<decltype(Point2{Length(0), Length(0)} + Vector2{Length(0), Length(0)}), Point2>);
 
     const Point2 heel{Length(0.0), Length(0.0)};
     const Point2 toe{Length(5.0), Length(0.0)};
@@ -59,7 +61,8 @@ TEST_CASE("vector arithmetic", "[FR-01][M-01]") {
 }
 
 TEST_CASE("cross product is an area whose sign gives the turn direction", "[FR-02][M-01]") {
-    static_assert(std::is_same_v<decltype(cross(Vector2{Length(0), Length(0)}, Vector2{Length(0), Length(0)})), Area>);
+    static_assert(
+        std::is_same_v<decltype(cross(Vector2{Length(0), Length(0)}, Vector2{Length(0), Length(0)})), Area>);
 
     const Vector2 along_base{Length(5.0), Length(0.0)};
     const Vector2 up{Length(0.0), Length(10.0)};

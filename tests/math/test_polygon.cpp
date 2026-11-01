@@ -67,11 +67,9 @@ TEST_CASE("simple polygons are accepted", "[FR-02][G-04]") {
     CHECK(math::is_simple(std::vector<Point2>{P(0, 0), P(5, 0), P(5, 10), P(0, 10)}, kTol));
     CHECK(math::is_simple(std::vector<Point2>{P(0, 0), P(7, 0), P(0, 10)}, kTol));
     // Concave L shape.
-    CHECK(math::is_simple(
-        std::vector<Point2>{P(0, 0), P(5, 0), P(5, 10), P(3, 10), P(3, 4), P(0, 4)}, kTol));
+    CHECK(math::is_simple(std::vector<Point2>{P(0, 0), P(5, 0), P(5, 10), P(3, 10), P(3, 4), P(0, 4)}, kTol));
     // A straight-angle vertex (collinear but not folded back) is fine.
-    CHECK(math::is_simple(
-        std::vector<Point2>{P(0, 0), P(5, 0), P(5, 5), P(5, 10), P(0, 10)}, kTol));
+    CHECK(math::is_simple(std::vector<Point2>{P(0, 0), P(5, 0), P(5, 5), P(5, 10), P(0, 10)}, kTol));
 }
 
 TEST_CASE("self-intersecting polygons are rejected", "[FR-02][G-04]") {
@@ -82,8 +80,7 @@ TEST_CASE("self-intersecting polygons are rejected", "[FR-02][G-04]") {
 }
 
 TEST_CASE("a vertex touching a non-adjacent edge is rejected", "[FR-02][G-04]") {
-    CHECK_FALSE(math::is_simple(
-        std::vector<Point2>{P(0, 0), P(6, 0), P(6, 6), P(3, 0), P(0, 6)}, kTol));
+    CHECK_FALSE(math::is_simple(std::vector<Point2>{P(0, 0), P(6, 0), P(6, 6), P(3, 0), P(0, 6)}, kTol));
 }
 
 TEST_CASE("adjacent edges folding back on each other are rejected", "[FR-02][G-04]") {
@@ -93,8 +90,7 @@ TEST_CASE("adjacent edges folding back on each other are rejected", "[FR-02][G-0
 }
 
 TEST_CASE("a zero-length edge is rejected", "[FR-02][G-04]") {
-    CHECK_FALSE(math::is_simple(
-        std::vector<Point2>{P(0, 0), P(5, 0), P(5, 0), P(5, 10), P(0, 10)}, kTol));
+    CHECK_FALSE(math::is_simple(std::vector<Point2>{P(0, 0), P(5, 0), P(5, 0), P(5, 10), P(0, 10)}, kTol));
 }
 
 TEST_CASE("geometric tolerance is relative to the polygon size", "[NFR-01][ADR-0007]") {

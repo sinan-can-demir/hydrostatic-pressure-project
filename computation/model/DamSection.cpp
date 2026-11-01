@@ -49,9 +49,7 @@ std::size_t crest_index(const DamSection& s) {
 
 } // namespace
 
-math::Point2 DamSection::heel() const {
-    return vertices.empty() ? kOrigin : vertices[heel_index(*this)];
-}
+math::Point2 DamSection::heel() const { return vertices.empty() ? kOrigin : vertices[heel_index(*this)]; }
 
 math::Point2 DamSection::toe() const {
     const std::vector<std::size_t> base = base_vertex_indices();

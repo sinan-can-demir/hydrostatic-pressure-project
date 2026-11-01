@@ -75,8 +75,7 @@ public:
     }
 };
 
-template <typename E>
-struct Name {
+template <typename E> struct Name {
     std::string_view text;
     E value;
 };
@@ -97,16 +96,17 @@ void read_enum(Reader& r, const json& value, const std::string& path, const Name
 }
 
 constexpr Name<model::LoadCondition> kConditions[] = {{"usual", model::LoadCondition::Usual},
-                                                       {"unusual", model::LoadCondition::Unusual},
-                                                       {"extreme", model::LoadCondition::Extreme}};
+                                                      {"unusual", model::LoadCondition::Unusual},
+                                                      {"extreme", model::LoadCondition::Extreme}};
 constexpr Name<model::ResultantZone> kZones[] = {{"middle_third", model::ResultantZone::MiddleThird},
-                                                  {"middle_half", model::ResultantZone::MiddleHalf},
-                                                  {"within_base", model::ResultantZone::WithinBase}};
+                                                 {"middle_half", model::ResultantZone::MiddleHalf},
+                                                 {"within_base", model::ResultantZone::WithinBase}};
 
 void read_row(Reader& r, const json& value, const std::string& path, model::CriteriaRow& row) {
     if (!r.object(value, path)) return;
     r.reject_unknown(value, path, {"zone", "min_sliding_fs"});
-    if (const json* z = r.member(value, path, "zone", false)) read_enum(r, *z, join(path, "zone"), kZones, row.zone);
+    if (const json* z = r.member(value, path, "zone", false))
+        read_enum(r, *z, join(path, "zone"), kZones, row.zone);
     r.read_number(value, path, "min_sliding_fs", row.min_sliding_fs);
 }
 
@@ -121,9 +121,12 @@ void read_criteria(Reader& r, const json& value, model::CriteriaSet& criteria) {
         }
     }
     // Rows replace the preset values field by field.
-    if (const json* v = r.member(value, path, "usual", false)) read_row(r, *v, "criteria.usual", criteria.usual);
-    if (const json* v = r.member(value, path, "unusual", false)) read_row(r, *v, "criteria.unusual", criteria.unusual);
-    if (const json* v = r.member(value, path, "extreme", false)) read_row(r, *v, "criteria.extreme", criteria.extreme);
+    if (const json* v = r.member(value, path, "usual", false))
+        read_row(r, *v, "criteria.usual", criteria.usual);
+    if (const json* v = r.member(value, path, "unusual", false))
+        read_row(r, *v, "criteria.unusual", criteria.unusual);
+    if (const json* v = r.member(value, path, "extreme", false))
+        read_row(r, *v, "criteria.extreme", criteria.extreme);
 }
 
 void read_vertices(Reader& r, const json& dam, std::vector<math::Point2>& out) {
@@ -166,26 +169,34 @@ double degrees_for(units::Angle angle) {
 }
 
 std::string_view name_of(model::LoadCondition c) {
-    for (const auto& n : kConditions) if (n.value == c) return n.text;
+    for (const auto& n : kConditions)
+        if (n.value == c) return n.text;
     return "usual";
 }
 std::string_view name_of(model::ResultantZone z) {
-    for (const auto& n : kZones) if (n.value == z) return n.text;
+    for (const auto& n : kZones)
+        if (n.value == z) return n.text;
     return "middle_third";
 }
 std::string_view name_of(simulation::ContactState s) {
     switch (s) {
-        case simulation::ContactState::Full: return "full";
-        case simulation::ContactState::Partial: return "partial";
-        case simulation::ContactState::None: return "none";
+    case simulation::ContactState::Full:
+        return "full";
+    case simulation::ContactState::Partial:
+        return "partial";
+    case simulation::ContactState::None:
+        return "none";
     }
     return "none";
 }
 std::string_view name_of(simulation::MomentRole r) {
     switch (r) {
-        case simulation::MomentRole::Resisting: return "resisting";
-        case simulation::MomentRole::Overturning: return "overturning";
-        case simulation::MomentRole::Neutral: return "neutral";
+    case simulation::MomentRole::Resisting:
+        return "resisting";
+    case simulation::MomentRole::Overturning:
+        return "overturning";
+    case simulation::MomentRole::Neutral:
+        return "neutral";
     }
     return "neutral";
 }
@@ -194,9 +205,12 @@ std::string_view name_of(simulation::ForceDirection d) {
 }
 std::string_view name_of(simulation::CheckStatus s) {
     switch (s) {
-        case simulation::CheckStatus::Pass: return "pass";
-        case simulation::CheckStatus::Fail: return "fail";
-        case simulation::CheckStatus::Skipped: return "skipped";
+    case simulation::CheckStatus::Pass:
+        return "pass";
+    case simulation::CheckStatus::Fail:
+        return "fail";
+    case simulation::CheckStatus::Skipped:
+        return "skipped";
     }
     return "skipped";
 }
@@ -219,8 +233,8 @@ ojson scenario_value(const model::Scenario& s) {
     j["load_condition"] = name_of(s.condition);
     j["fluid"] = {{"density_kg_m3", s.fluid.density.kg_per_m3}, {"gravity_m_s2", s.fluid.gravity.m_per_s2}};
     j["concrete"] = {{"unit_weight_n_m3", s.concrete.unit_weight.n_per_m3}};
-    j["allowable_bearing_pa"] = s.foundation.allowable_bearing ? ojson(s.foundation.allowable_bearing->pascals)
-                                                               : ojson(nullptr);
+    j["allowable_bearing_pa"] =
+        s.foundation.allowable_bearing ? ojson(s.foundation.allowable_bearing->pascals) : ojson(nullptr);
     j["criteria"] = {{"usual", row_to_json(s.criteria.usual)},
                      {"unusual", row_to_json(s.criteria.unusual)},
                      {"extreme", row_to_json(s.criteria.extreme)}};
@@ -256,8 +270,8 @@ std::expected<model::Scenario, std::vector<IoError>> parse_scenario(std::string_
     }
 
     r.reject_unknown(root, "",
-                     {"schema_version", "dam", "water_level_m", "friction_angle_deg", "load_condition", "fluid",
-                      "concrete", "allowable_bearing_pa", "criteria", "pressure_samples"});
+                     {"schema_version", "dam", "water_level_m", "friction_angle_deg", "load_condition",
+                      "fluid", "concrete", "allowable_bearing_pa", "criteria", "pressure_samples"});
 
     model::DamSection section;
     if (const json* dam = r.member(root, "", "dam", true); dam != nullptr && r.object(*dam, "dam")) {
@@ -313,7 +327,8 @@ std::expected<model::Scenario, std::vector<IoError>> parse_scenario(std::string_
 
     model::Scenario scenario{.section = std::move(section),
                              .water_level = model::WaterLevel{units::Length(water_level)},
-                             .foundation = model::Foundation{units::Angle::from_degrees(friction_deg), bearing},
+                             .foundation =
+                                 model::Foundation{units::Angle::from_degrees(friction_deg), bearing},
                              .condition = condition,
                              .fluid = fluid,
                              .concrete = concrete,
@@ -353,13 +368,12 @@ std::string result_to_json(const simulation::Result& r) {
     j["contributions"] = contributions;
 
     const simulation::Resultant& res = r.resultant;
-    j["resultant"] = {
-        {"vertical_n_m", res.vertical.n_per_m},
-        {"horizontal_n_m", res.horizontal.n_per_m},
-        {"moment_about_toe_n_m_m", res.moment_about_toe.n_m_per_m},
-        {"x_from_toe_m", res.x_from_toe ? ojson(res.x_from_toe->meters) : ojson(nullptr)},
-        {"eccentricity_m", res.eccentricity ? ojson(res.eccentricity->meters) : ojson(nullptr)},
-        {"base_length_m", res.base_length.meters}};
+    j["resultant"] = {{"vertical_n_m", res.vertical.n_per_m},
+                      {"horizontal_n_m", res.horizontal.n_per_m},
+                      {"moment_about_toe_n_m_m", res.moment_about_toe.n_m_per_m},
+                      {"x_from_toe_m", res.x_from_toe ? ojson(res.x_from_toe->meters) : ojson(nullptr)},
+                      {"eccentricity_m", res.eccentricity ? ojson(res.eccentricity->meters) : ojson(nullptr)},
+                      {"base_length_m", res.base_length.meters}};
 
     j["contact"] = {{"state", name_of(r.contact.state)},
                     {"length_m", r.contact.length.meters},

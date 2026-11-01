@@ -17,7 +17,7 @@ int main() {
     using math::Point2;
     using units::Length;
 
-    constexpr int kDownstreamPoints = 997;  // + heel, toe, upstream crest = 1000 vertices
+    constexpr int kDownstreamPoints = 997; // + heel, toe, upstream crest = 1000 vertices
     const double base = 60.0;
     const double height = 100.0;
 
@@ -55,8 +55,8 @@ int main() {
     }
 
     std::printf("N-03: of that, validate() alone: %.3f ms\n", validate_ms);
-    std::printf("N-03: analyze() of %zu vertices: best of 5 = %.3f ms (budget 10 ms) [%s]%s\n", v.size(), best_ms,
-                best_ms <= 10.0 ? "within budget" : "OVER BUDGET",
+    std::printf("N-03: analyze() of %zu vertices: best of 5 = %.3f ms (budget 10 ms) [%s]%s\n", v.size(),
+                best_ms, best_ms <= 10.0 ? "within budget" : "OVER BUDGET",
                 ok ? "" : " -- the benchmark section was rejected as invalid");
     return ok ? 0 : 1;
 }

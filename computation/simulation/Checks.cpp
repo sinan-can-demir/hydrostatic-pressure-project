@@ -4,8 +4,7 @@
 
 namespace simulation {
 
-LocationCheck check_location(const Resultant& resultant, const Contact& contact,
-                             model::ResultantZone zone) {
+LocationCheck check_location(const Resultant& resultant, const Contact& contact, model::ResultantZone zone) {
     const double base = resultant.base_length.meters;
     double lower = 0.0;
     double upper = base;
@@ -19,8 +18,7 @@ LocationCheck check_location(const Resultant& resultant, const Contact& contact,
 
     const bool inside = resultant.x_from_toe && contact.state != ContactState::None &&
                         resultant.x_from_toe->meters >= lower && resultant.x_from_toe->meters <= upper;
-    return {inside ? CheckStatus::Pass : CheckStatus::Fail, zone, units::Length(lower),
-            units::Length(upper)};
+    return {inside ? CheckStatus::Pass : CheckStatus::Fail, zone, units::Length(lower), units::Length(upper)};
 }
 
 SlidingCheck check_sliding(const SlidingResult& sliding, double minimum_fs) {

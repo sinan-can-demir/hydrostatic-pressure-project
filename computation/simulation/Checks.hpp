@@ -33,7 +33,7 @@ struct SlidingCheck {
     bool operator==(const SlidingCheck&) const = default;
 
     CheckStatus status;
-    std::optional<double> factor_of_safety;  // empty = no driving shear, which passes
+    std::optional<double> factor_of_safety; // empty = no driving shear, which passes
     double minimum;
 };
 
@@ -54,8 +54,7 @@ struct Checks {
     BearingCheck bearing;
 };
 
-LocationCheck check_location(const Resultant& resultant, const Contact& contact,
-                             model::ResultantZone zone);
+LocationCheck check_location(const Resultant& resultant, const Contact& contact, model::ResultantZone zone);
 SlidingCheck check_sliding(const SlidingResult& sliding, double minimum_fs);
 BearingCheck check_bearing(const Contact& contact, std::optional<units::Pressure> allowable);
 Verdict make_verdict(const Checks& checks);
