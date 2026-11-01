@@ -81,7 +81,10 @@ if(HP_BUILD_IO)
         SYSTEM)
     FetchContent_MakeAvailable(nlohmann_json)
 
-    add_library(hp_io STATIC computation/io/Json.cpp)
+    # io/ sits outside computation/ on purpose: hp_core's include path then cannot reach hp_io
+    # headers (NFR-06; checked by the build_graph tests).
+    add_library(hp_io STATIC io/src/Json.cpp)
+    target_include_directories(hp_io PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/io/include)
     target_link_libraries(hp_io PUBLIC hp_core PRIVATE nlohmann_json::nlohmann_json)
     hp_set_warnings(hp_io)
 

@@ -4,6 +4,7 @@
 #include <cmath>
 #include <limits>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "math/Point2.hpp"
@@ -243,4 +244,39 @@ TEST_CASE("pressure_samples must be between 2 and 100000 when given", "[FR-20][V
         REQUIRE(has(errors, ErrorCode::PressureSamplesOutOfRange));
         CHECK(find(errors, ErrorCode::PressureSamplesOutOfRange)->path == "pressure_samples");
     }
+}
+
+TEST_CASE("every error code has its documented stable name", "[V-01][FR-19]") {
+    // These names appear in CLI output and in docs/07-json-schema.md; changing one is a breaking change.
+    const std::pair<ErrorCode, const char*> names[] = {
+        {ErrorCode::TooFewVertices, "too_few_vertices"},
+        {ErrorCode::NonFiniteValue, "non_finite_value"},
+        {ErrorCode::ValueOutOfRange, "value_out_of_range"},
+        {ErrorCode::DuplicateVertex, "duplicate_vertex"},
+        {ErrorCode::ClockwiseOrder, "clockwise_order"},
+        {ErrorCode::ZeroArea, "zero_area"},
+        {ErrorCode::SelfIntersecting, "self_intersecting"},
+        {ErrorCode::NoBaseEdge, "no_base_edge"},
+        {ErrorCode::MultipleBaseEdges, "multiple_base_edges"},
+        {ErrorCode::VertexBelowBase, "vertex_below_base"},
+        {ErrorCode::UpstreamFaceDips, "upstream_face_dips"},
+        {ErrorCode::WaterLevelNegative, "water_level_negative"},
+        {ErrorCode::WaterLevelAboveCrest, "water_level_above_crest"},
+        {ErrorCode::FrictionAngleOutOfRange, "friction_angle_out_of_range"},
+        {ErrorCode::NonPositiveFluidDensity, "non_positive_fluid_density"},
+        {ErrorCode::NonPositiveGravity, "non_positive_gravity"},
+        {ErrorCode::NonPositiveUnitWeight, "non_positive_unit_weight"},
+        {ErrorCode::NonPositiveAllowableBearing, "non_positive_allowable_bearing"},
+        {ErrorCode::NonPositiveSlidingFs, "non_positive_sliding_fs"},
+        {ErrorCode::PressureSamplesOutOfRange, "pressure_samples_out_of_range"},
+    };
+    for (const auto& [code, name] : names) CHECK(simulation::to_string(code) == name);
+}
+
+TEST_CASE("a water level beyond the coordinate limit is rejected", "[NFR-10][V-05]") {
+    model::Scenario s = ac1();
+    s.water_level = model::WaterLevel{Length(2.0e6)};
+    const auto errors = simulation::validate(s);
+    REQUIRE(has(errors, ErrorCode::ValueOutOfRange));
+    CHECK(find(errors, ErrorCode::ValueOutOfRange)->path == "water_level_m");
 }

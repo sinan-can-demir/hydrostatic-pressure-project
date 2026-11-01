@@ -11,6 +11,14 @@
       "cacheVariables": { "CMAKE_CXX_COMPILER": "clang++" }
     },
     {
+      "name": "coverage",
+      "binaryDir": "${sourceDir}/build-coverage",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "--coverage -O0"
+      }
+    },
+    {
       "name": "asan-ubsan",
       "binaryDir": "${sourceDir}/build-asan",
       "cacheVariables": {
@@ -22,11 +30,13 @@
   "buildPresets": [
     { "name": "default", "configurePreset": "default" },
     { "name": "clang", "configurePreset": "clang" },
+    { "name": "coverage", "configurePreset": "coverage" },
     { "name": "asan-ubsan", "configurePreset": "asan-ubsan" }
   ],
   "testPresets": [
     { "name": "default", "configurePreset": "default", "output": { "outputOnFailure": true } },
     { "name": "clang", "configurePreset": "clang", "output": { "outputOnFailure": true } },
+    { "name": "coverage", "configurePreset": "coverage", "output": { "outputOnFailure": true } },
     { "name": "asan-ubsan", "configurePreset": "asan-ubsan", "output": { "outputOnFailure": true } }
   ]
 }

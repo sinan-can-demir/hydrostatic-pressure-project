@@ -124,16 +124,16 @@ Per ADR-0007 and NFR-01: reference comparisons use relative error 1e-9 (absolute
 | FR-16 | A-01, A-02 |
 | FR-17 | I-01, I-02, I-03, CLI-01 |
 | FR-18 | CLI-01, CLI-02 |
-| FR-19 | I-02 |
+| FR-19 | I-02, docs/07-json-schema.md |
 | FR-20 | I-05 |
 | NFR-01 | AC-1 to AC-6 (all reference tests), P-01 |
 | NFR-02 | U-01, U-02, CF-01 |
 | NFR-03 | A-02, I-04, N-01, N-02 |
 | NFR-04 | A-01, V-01 |
-| NFR-05 | build on GCC and Clang (CI matrix; Clang to be installed) |
+| NFR-05 | build and full suite on GCC and Clang (`cmake --preset clang`); no CI yet |
 | NFR-06 | N-04 |
-| NFR-07 | this matrix; a script checks that every M requirement ID appears in at least one test tag |
-| NFR-08 | N-03 |
+| NFR-07 | this matrix; `scripts/traceability.py` checks that every M requirement ID appears in at least one test |
+| NFR-08 | N-03 (`hp_bench_analyze`, advisory; run in a Release build) |
 | NFR-09 | R-03, I-04 |
 | NFR-10 | V-05 |
 | NFR-11 | review of committed config |

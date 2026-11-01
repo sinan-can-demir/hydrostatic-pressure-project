@@ -50,7 +50,7 @@ computation/
   model/            (new) Scenario, DamSection, Foundation, CriteriaSet, WaterLevel, LoadCondition
   simulation/       Load interface, WaterLoad, SelfWeight, Analyzer (was Solver), Validator, Result types
                     (PressureField, HydrostaticModel, Solver stubs are renamed per the domain model mapping)
-  io/               (new) JSON reading/writing, schema version handling
+io/                 (new, outside computation/ so hp_core cannot include it, NFR-06 / N-04) include/io + src: JSON reading/writing, schema version handling
 apps/cli/           (new) main.cpp
 visualization/      untouched in v1
 tests/              (new) unit, reference-case, compile-fail, CLI

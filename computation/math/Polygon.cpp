@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <vector>
 
 namespace math {
 
@@ -57,6 +58,23 @@ bool folds_back(D prev, D mid, D next, double tol) {
     return on_segment(prev, mid, next, tol) || on_segment(mid, next, prev, tol);
 }
 
+// Axis-aligned bounds of an edge, used to skip pairs of edges that are far apart.
+struct Box {
+    double min_x, max_x, min_y, max_y;
+};
+
+Box box_of(D a, D b) {
+    return {std::min(a.x, b.x), std::max(a.x, b.x), std::min(a.y, b.y), std::max(a.y, b.y)};
+}
+
+// Two edges can only meet if their boxes overlap once padded by `margin`. segments_meet counts
+// points within tol of a line and within tol along it, which can reach tol*sqrt(2) outside an
+// edge's box, so callers pass 2*tol: culling then never changes a result.
+bool boxes_apart(const Box& p, const Box& q, double margin) {
+    return p.max_x + margin < q.min_x || q.max_x + margin < p.min_x || p.max_y + margin < q.min_y ||
+           q.max_y + margin < p.min_y;
+}
+
 } // namespace
 
 units::Area signed_area(std::span<const Point2> v) {
@@ -103,9 +121,14 @@ bool is_simple(std::span<const Point2> v, units::Length tolerance) {
     }
 
     // Non-adjacent edge pairs must not meet at all.
+    std::vector<Box> boxes;
+    boxes.reserve(n);
+    for (std::size_t i = 0; i < n; ++i) boxes.push_back(box_of(to_d(v[i]), to_d(v[(i + 1) % n])));
+
     for (std::size_t i = 0; i < n; ++i) {
         for (std::size_t j = i + 2; j < n; ++j) {
             if (i == 0 && j == n - 1) continue; // adjacent through the closing edge
+            if (boxes_apart(boxes[i], boxes[j], 2.0 * tol)) continue;
             if (segments_meet(to_d(v[i]), to_d(v[(i + 1) % n]), to_d(v[j]), to_d(v[(j + 1) % n]), tol)) {
                 return false;
             }

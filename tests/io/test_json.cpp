@@ -264,3 +264,20 @@ TEST_CASE("I-05 pressure_samples in the document gives that many samples in the 
     REQUIRE(j["pressure"].size() == 5);
     CHECK_THAT(j["pressure"][2]["y_m"].get<double>(), WithinRel(5.0, 1e-12));
 }
+
+TEST_CASE("I-02 every IO error code has its documented stable name", "[FR-19][I-02]") {
+    // These names appear in CLI output and in docs/07-json-schema.md.
+    CHECK(io::to_string(io::IoErrorCode::MalformedJson) == "malformed_json");
+    CHECK(io::to_string(io::IoErrorCode::UnsupportedSchemaVersion) == "unsupported_schema_version");
+    CHECK(io::to_string(io::IoErrorCode::MissingField) == "missing_field");
+    CHECK(io::to_string(io::IoErrorCode::UnknownField) == "unknown_field");
+    CHECK(io::to_string(io::IoErrorCode::WrongType) == "wrong_type");
+    CHECK(io::to_string(io::IoErrorCode::InvalidValue) == "invalid_value");
+}
+
+TEST_CASE("I-02 a string field given a non-string is a type error", "[FR-17][I-02]") {
+    CHECK(has(io::parse_scenario(with("load_condition", 5)).error(), io::IoErrorCode::WrongType,
+              "load_condition"));
+    CHECK(has(io::parse_scenario(with("criteria", nlohmann::json{{"preset", 1}})).error(),
+              io::IoErrorCode::WrongType, "criteria.preset"));
+}

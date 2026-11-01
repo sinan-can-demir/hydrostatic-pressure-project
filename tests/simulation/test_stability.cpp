@@ -430,3 +430,14 @@ TEST_CASE("I-05 pressure_samples gives that many evenly spaced samples in the re
     CHECK_THAT(r.pressure.samples[3].position.y.meters, WithinRel(3.0, 1e-12));
     CHECK(r.scenario.pressure_samples == 11);
 }
+
+TEST_CASE("R-03 a force through the toe has no moment and a neutral role", "[FR-11][R-03]") {
+    const DamSection section{{P(0, 0), P(5, 0), P(5, 10), P(0, 10)}};
+    const std::vector<ForceContribution> contributions{
+        ForceContribution{ForcePerWidth(0.0), ForcePerWidth(-1000.0), P(5, 5), "at the toe"}};
+    const OverturningReport report = make_overturning(contributions, section);
+    REQUIRE(report.terms.size() == 1);
+    CHECK(report.terms[0].role == MomentRole::Neutral);
+    CHECK(report.terms[0].arm.meters == 0.0);
+    CHECK_FALSE(report.ratio.has_value());
+}

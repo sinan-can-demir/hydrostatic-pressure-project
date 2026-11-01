@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
+#include <cmath>
 #include <vector>
 
 #include "math/Point2.hpp"
@@ -102,4 +103,21 @@ TEST_CASE("geometric tolerance is relative to the polygon size", "[NFR-01][ADR-0
     CHECK_THAT(math::geometric_tolerance(small).meters, WithinRel(1e-12, 1e-12));
     CHECK_THAT(math::geometric_tolerance(large).meters, WithinRel(1e-9, 1e-12));
     CHECK_THAT(math::geometric_tolerance(std::vector<Point2>{}).meters, WithinAbs(0.0, 0.0));
+}
+
+TEST_CASE("a long outline is simple, and a far-apart crossing is still found", "[FR-02][G-04][NFR-08]") {
+    // Many vertices on a curved downstream face, so most edge pairs are far apart.
+    auto curve = [](Point2 crest_upstream) {
+        std::vector<Point2> v{P(0, 0), P(60, 0)};
+        for (int i = 1; i <= 400; ++i) {
+            const double t = i / 400.0;
+            v.push_back(P(60.0 * (1.0 - 0.6 * std::pow(t, 1.5)), 100.0 * t));
+        }
+        v.push_back(crest_upstream);
+        return v;
+    };
+    CHECK(math::is_simple(curve(P(0, 100)), kTol));
+    // Pulling the last vertex across the dam makes its two edges cut the downstream face
+    // hundreds of edges away from them.
+    CHECK_FALSE(math::is_simple(curve(P(54, 50)), kTol));
 }
