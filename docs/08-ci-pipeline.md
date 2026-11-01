@@ -1,6 +1,6 @@
 # 08 Continuous integration pipeline
 
-Status: APPROVED (gate passed 2026-10-31, all five decisions in section 8 as recommended). Implementation is not started; `.github/` does not exist yet.
+Status: APPROVED (gate passed 2026-10-31, all five decisions in section 8 as recommended). Implemented in PR #1 (`.github/workflows/ci.yml`); `main` branch protection requires gcc, clang, sanitizers, core-without-io and traceability.
 Requirements: NFR-05 (GCC and Clang build matrix, warnings as errors), NFR-07 (traceability), NFR-08 (performance, advisory), NFR-03 (determinism), test plan section 8 (verification).
 Sources: `CMakePresets.json`, `scripts/traceability.py`, `scripts/coverage.py`, `tests/CMakeLists.txt`.
 
