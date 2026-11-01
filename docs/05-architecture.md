@@ -1,6 +1,6 @@
 # 05 Architecture
 
-Status: APPROVED (Phase 4b gate). ADRs 0001 to 0006 are ACCEPTED; ADR-0007 (numeric policy) is still PROPOSED because it was not part of the gate questions.
+Status: APPROVED (Phase 4b gate). ADRs 0001 to 0007 are ACCEPTED (ADR-0007, the numeric policy, was approved after S7).
 Inputs: `02-requirements.md`, `03-use-cases.md`, `04-domain-model.md`.
 
 ## 1. Architectural drivers
@@ -124,7 +124,7 @@ Keys carry their unit as a suffix so a file is self-describing (NFR-09, FR-19). 
 Optional fields take the documented defaults. Unknown keys are rejected so typos are not silently ignored. The result file echoes the inputs, then adds `pressure`, `contributions` (force, arm, moment, role), `resultant`, `contact`, `overturning`, `checks`, `warnings` and `verdict`.
 
 ## 7. Cross-cutting policies
-- **Numbers:** `double` throughout; no `float`. Tolerance used only where a decision is needed (polygon validity, threshold boundaries), always relative to model size, defined in one header (ADR-0007).
+- **Numbers:** `double` throughout; no `float`. Tolerance used only where a decision is needed (polygon validity, threshold boundaries), always relative to model size, defined in one function, `math::geometric_tolerance` (ADR-0007).
 - **Determinism:** compile with `-ffp-contract=off` and no fast-math so results do not depend on fused multiply-add choices (NFR-03).
 - **Errors:** `ValidationError { code, path, message }`, codes are a stable enum shared by library and CLI. I/O errors are a separate type in `hp_io`.
 - **Concurrency:** none needed; purity makes concurrent calls safe.

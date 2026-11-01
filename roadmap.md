@@ -9,7 +9,7 @@ Process: each design phase is a gate (documents in `docs/`); implementation is t
 | 1 Vision and stakeholders | `docs/01-vision-stakeholders.md` | approved |
 | 2 Requirements | `docs/02-requirements.md` | approved |
 | 3 Use cases | `docs/03-use-cases.md` | approved |
-| 4 Domain model and architecture | `docs/04-domain-model.md`, `docs/05-architecture.md`, `docs/adr/` | approved (ADR-0007 pending) |
+| 4 Domain model and architecture | `docs/04-domain-model.md`, `docs/05-architecture.md`, `docs/adr/` | approved |
 | 5 Test plan | `docs/06-test-plan.md` | approved |
 
 ## Implementation (Phase 6)
@@ -52,5 +52,4 @@ S7 delivered:
 **Next:** nothing is scheduled. Candidates are in "Later" above; the open items need your decision first.
 
 ## Open items
-- ADR-0007 (numeric tolerance and determinism) is still PROPOSED; ask for approval at the next gate.
 - The USACE criteria come from a third-party scan of EM 1110-2-2200 (1995); re-verify against the official publication before any compliance claim (decision R3).
