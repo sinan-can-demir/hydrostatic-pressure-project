@@ -23,14 +23,17 @@ This document describes concepts and rules only. It does not fix C++ class layou
 | Foundation | Value object | Friction angle, optional allowable bearing pressure (cohesion fixed at zero in v1). | FR-10, FR-14, CON-05 |
 | CriteriaSet | Value object | Per load condition: resultant zone and minimum sliding FS. Presets: USACE Table 4-1. | FR-12, FR-13 |
 | LoadCondition | Enumeration | Usual, Unusual, Extreme; selects which row of the CriteriaSet applies. | CON-06 |
-| Load | Concept (interface in the architecture) | Something that produces force contributions on the dam. v1 implementations: WaterLoad, SelfWeight. Later: Uplift, Sediment, Ice, Seismic. | FR-21 (extension) |
+| Load | Concept (interface in the architecture) | Something that produces force contributions on the dam. v1 implementations: WaterLoad, SelfWeight. v1.1 (planned, docs/09, ADR-0008): TailwaterLoad, UpliftLoad. Later: Sediment, Ice, Seismic. | FR-21 (extension) |
 | ForceContribution | Value object | One force: components (N per metre), application point, source name. The unit of hand-verification. | FR-06, FR-07, FR-11 |
 | PressureDistribution | Value object | Pressure samples along the upstream face (position, pressure, normal direction). | FR-05, FR-20 |
 | BaseResultant | Value object | Sum of vertical force V, sum of horizontal force H, total moment about the toe, location x_R from the toe, eccentricity e. | FR-08 |
 | BaseContact | Value object | Contact length, heel and toe pressures, contact state (full, partial, none). | FR-09 |
 | StabilityCheck | Value object | Name, computed value, threshold, verdict (pass, fail, skipped). | FR-10, FR-12, FR-14 |
 | OverturningReport | Value object | Per-contribution lever arm and moment, tagged resisting or overturning, with the totals and the informational ratio. | FR-11 |
-| Warning | Value object | Code and message, always including "uplift not modelled". | FR-15 |
+| Tailwater | Value object (v1.1, optional) | Depth H2 of the downstream water above the base; 0 <= H2 <= Hw. | FR-22 |
+| Drains | Value object (v1.1, optional) | Effectiveness E, distance X from the heel, optional gallery elevation. Absent means no drains. | FR-25 |
+| UpliftDistribution | Value object (v1.1) | Pressure samples along the base from heel to toe, including the drain line. | FR-24, FR-30 |
+| Warning | Value object | Code and message; includes "uplift not modelled" unless uplift is modelled (v1.1). | FR-15 |
 | Result | Value object (aggregate root of output) | All of the above plus the echoed inputs and the overall verdict. | FR-16, UC-07 |
 | ValidationError | Value object | Code, field path, message. Validation returns a list (decision U1). | FR-02, NFR-04 |
 | Analyzer | Service | Scenario to Result (or list of ValidationError). The only entry point. | FR-16 |
@@ -151,7 +154,7 @@ The key design choice is that **all loads become `ForceContribution` values** an
 1. The section is a simple polygon with positive area, counter-clockwise, with exactly one edge on y = 0 that is horizontal; no vertex has y < 0.
 2. Heel is the left end and toe the right end of the base edge; B > 0.
 3. The upstream face is the boundary chain from the heel to the crest, and its elevation does not decrease along that chain. (New condition, see Q2 below.)
-4. 0 <= water level <= crest height.
+4. 0 <= water level <= crest height. (v1.1) If given, 0 <= tailwater depth <= water level; the downstream face (crest to toe) does not increase in elevation toward the toe; drains: 0 < E <= 1 and 0 <= X <= B.
 5. Density, gravity, unit weight > 0; friction angle strictly in (0, 90) degrees; all numbers finite.
 6. `Result` is only produced for a valid `Scenario`, and echoes the exact inputs and criteria used.
 

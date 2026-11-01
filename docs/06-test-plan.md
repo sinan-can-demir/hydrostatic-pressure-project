@@ -148,3 +148,58 @@ A slice is complete when: its tests were written first and failed; all its tests
 | T1 | Golden-file tests approved. JSON is the v1 output format; a more efficient storage format may replace or complement it later. | Format code lives only in `hp_io` (ADR-0005), so a second serializer can be added behind the same `Result` type without touching the core. The golden files belong to the JSON serializer; a new format brings its own golden files. Recommendation: keep JSON as the human-readable interchange format even after a binary one exists. |
 | T2 | Coverage is advisory: a report showing which lines the tests executed, with a 90 percent goal for the core. It never blocks a commit. | Coverage only shows what code ran, not that it was checked correctly; the reference cases and properties are what prove correctness. |
 | T3 | No external oracle available; v1 relies on AC-1 to AC-6. | Residual risk: all oracles come from the same author and formulas. Mitigation: when a published textbook or USACE example is found, add it as AC-7 and rerun. |
+
+## 11. Increment v1.1: tailwater and uplift (docs/09, ADR-0008)
+Status: ACCEPTED with the increment gate. Tests are written first, slice by slice (U1 to U4). Requirement rows enter `02-requirements.md` in the slice whose tests cover them.
+
+### 11.1 Reference cases (independent oracle)
+Common inputs: the AC-1 dam (rectangle B = 5, H = 10, Hw = 10), rho = 1000, g = 9.81, gamma = 23 500, phi = 35 degrees, usual condition. W = 1 175 000, M_res = 2 937 500, water Fx = 490 500, M_water = -1 635 000. Hand derivations are in `docs/09` section 6; all five were re-derived by a separate numerical-integration script (midpoint rule, 200 000 steps, no engine formulas), which also caught an arithmetic error in the first hand value of AU-3.
+
+| Case | Added input | Uplift U (N/m) | Uplift moment | V | H | M about toe | x_R (m) | Sliding FS |
+|------|-------------|----------------|---------------|---|---|-------------|---------|-----------|
+| AU-1 | uplift, no drains, no tailwater | 245 250 | -817 500 | 929 750 | 490 500 | 485 000 | 0.5216 | 1.3273 |
+| AU-2 | tailwater 3 m (Fx = -44 145 at 1 m, moment +44 145), uplift | 318 825 | -940 125 | 856 175 | 446 355 | 406 520 | 0.4748 | 1.3431 |
+| AU-3 | drains E = 0.5, X = 1 m | 147 150 | -523 200 | 1 027 850 | 490 500 | 779 300 | 0.7582 | 1.4673 |
+| AU-5 | drains E = 0.5, X = 0.2 m (Fig. 3-3 rule) | 122 625 | -408 750 | 1 052 375 | 490 500 | 893 750 | 0.8493 | 1.5023 |
+
+AU-4 (cracked base) is reserved for tier B. Cases AU-1, AU-2 and AU-3 also have contact length 3 x_R < B, so the FR-28 warning must appear (AU-1 to AU-3 and AU-5 are all partial-contact cases).
+
+### 11.2 Test catalogue additions
+| Area | Tag | Tests | Requirements |
+|------|-----|-------|--------------|
+| Validation | TW-01 | Tailwater depth: negative, NaN, above Hw rejected, each with its own code and path; 0 and exactly Hw accepted; omitted means none | FR-22 |
+| Validation | TW-02 | Downstream face that rises toward the toe is rejected; vertical and sloping faces accepted | FR-22 (domain invariant 3) |
+| Loads | TW-03 | `TailwaterLoad` on a vertical face: Fx = 1/2 rho g H2^2 upstream-directed at H2/3 (AU-2); H2 = 0 emits nothing; scenario without tailwater leaves the contribution list unchanged | FR-23, NFR-12 |
+| Loads | TW-04 | `TailwaterLoad` on a sloped downstream face: Fy equals the weight of water above the face and acts downward at the right x | FR-23 |
+| Validation | UP-01 | Drains: E <= 0, E > 1, NaN, X < 0, X > B, negative gallery elevation each rejected with distinct codes; no drains block means E = 0 | FR-25 |
+| Loads | UP-02 | `UpliftLoad` without drains: heel/toe ordinates, force and moment (AU-1, AU-2); tailwater changes only the toe ordinate | FR-24 |
+| Loads | UP-03 | `UpliftLoad` with drains: drain-line head H3 for H4 > H2 and H4 < H2 (gallery rule); AU-3 | FR-24, FR-25 |
+| Loads | UP-04 | Drains within 0.05 H1 of the upstream face use the single-line rule (AU-5); X just above and just below the threshold select the two rules | FR-24 |
+| Property | UP-05 | Random valid sections and drain data: the uplift force and moment equal an independent numerical integration of the diagram (as P-05) | FR-24 |
+| Property | UP-06 | Monotonicity: more drain effectiveness never increases U; higher tailwater never increases U | FR-24, FR-25 |
+| Pipeline | UP-07 | AU-1 to AU-3 and AU-5 through `analyze`: V, H, M, x_R, FS match 11.1; report lists "uplift" and "tailwater" terms with arm, moment and role | FR-26, FR-27 |
+| Warnings | UP-08 | E at 0.24, 0.25, 0.50, 0.51, 0.67, 0.68 produce the documented warnings; E is never altered | FR-25 |
+| Warnings | UP-09 | FR-28: contact length < B adds the unconservative-uplift warning; full contact does not; U > W reports unstable | FR-28 |
+| Warnings | W-01a | Without uplift the v1 warning is present (W-01 unchanged); with uplift it is replaced by the model statement | FR-15 |
+| Samples | UP-10 | Uplift samples include heel, drain line and toe with the right pressures | FR-30 |
+| I/O | I-06 | Schema version 1 documents behave exactly as before (golden `ac1_result.json` unchanged); version 2 with tailwater and drains parses; unknown keys still rejected; version 3 rejected | FR-31, FR-19, NFR-12 |
+| I/O | I-07 | Golden file for AU-3 result JSON | FR-31 |
+| Regression | N-05 | Every v1 test passes unchanged, and AC-1 to AC-6 results are bitwise equal with the new loads registered but inactive | NFR-12 |
+
+### 11.3 Traceability additions
+| Requirement | Tests |
+|-------------|-------|
+| FR-22 | TW-01, TW-02 |
+| FR-23 | TW-03, TW-04 |
+| FR-24 | UP-02, UP-03, UP-04, UP-05, UP-06 |
+| FR-25 | UP-01, UP-03, UP-06, UP-08 |
+| FR-26 | UP-07 |
+| FR-27 | UP-07 |
+| FR-28 | UP-09 |
+| FR-30 | UP-10 |
+| FR-31 | I-06, I-07 |
+| NFR-12 | TW-03, N-05, I-06 |
+FR-29 (cracked base, tier B) has no tests until it is scheduled. FR-15 gains W-01a.
+
+### 11.4 Slice exit criteria
+Section 9 applies to each of U1 to U4. In addition: the oracle script results in 11.1 appear as comments in the tests, and the mutation check (as for S7) is repeated on `TailwaterLoad` and `UpliftLoad` before U3 closes.
