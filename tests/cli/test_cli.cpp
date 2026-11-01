@@ -1,5 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <sstream>
@@ -36,12 +37,14 @@ std::string read_file(const fs::path& path) {
     return ss.str();
 }
 
-// A scratch directory removed when the test ends.
+// A scratch directory removed when the test ends. The name is unique per instance because CTest
+// runs the tests in parallel processes; a shared name let one test delete another's directory.
 struct TempDir {
-    fs::path path = fs::temp_directory_path() / "hp_cli_tests";
+    fs::path path;
     TempDir() {
-        fs::remove_all(path);
-        fs::create_directories(path);
+        std::string pattern = (fs::temp_directory_path() / "hp_cli_tests_XXXXXX").string();
+        REQUIRE(::mkdtemp(pattern.data()) != nullptr);
+        path = pattern;
     }
     ~TempDir() { fs::remove_all(path); }
 };
