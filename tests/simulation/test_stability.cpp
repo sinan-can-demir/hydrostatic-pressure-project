@@ -217,47 +217,47 @@ TEST_CASE("C-01 H = 0 reports no driving shear instead of dividing by zero", "[F
 
 // ---- C-02 .. C-05 checks -------------------------------------------------------------------
 
-TEST_CASE("C-02 AC-1 usual: location and sliding fail, overall FAIL", "[FR-12][C-02]") {
+TEST_CASE("C-02 AC-1 usual: location and sliding fail, overall FAIL", "[FR-XX][C-02]") {
     const Result r = run(ac1(10.0, LoadCondition::Usual));
     CHECK(r.checks.location.status == CheckStatus::Fail);
     CHECK(r.checks.sliding.status == CheckStatus::Fail);
     CHECK(r.verdict == Verdict::Fail);
 }
 
-TEST_CASE("C-02 AC-1 extreme: location and sliding pass", "[FR-12][C-02]") {
+TEST_CASE("C-02 AC-1 extreme: location and sliding pass", "[FR-XX][C-02]") {
     const Result r = run(ac1(10.0, LoadCondition::Extreme));
     CHECK(r.checks.location.status == CheckStatus::Pass);
     CHECK(r.checks.sliding.status == CheckStatus::Pass);
     CHECK(r.verdict == Verdict::Pass);
 }
 
-TEST_CASE("C-02 AC-2 usual: location passes, sliding fails", "[FR-12][C-02]") {
+TEST_CASE("C-02 AC-2 usual: location passes, sliding fails", "[FR-XX][C-02]") {
     const Result r = run(ac2());
     CHECK(r.checks.location.status == CheckStatus::Pass);
     CHECK(r.checks.sliding.status == CheckStatus::Fail);
     CHECK(r.verdict == Verdict::Fail);
 }
 
-TEST_CASE("C-02 AC-4 usual: all checks pass", "[FR-12][C-02]") {
+TEST_CASE("C-02 AC-4 usual: all checks pass", "[FR-XX][C-02]") {
     const Result r = run(ac1(6.0));
     CHECK(r.checks.location.status == CheckStatus::Pass);
     CHECK(r.checks.sliding.status == CheckStatus::Pass);
     CHECK(r.verdict == Verdict::Pass);
 }
 
-TEST_CASE("C-02 AC-5 fails: resultant outside the base", "[FR-12][C-02]") {
+TEST_CASE("C-02 AC-5 fails: resultant outside the base", "[FR-XX][C-02]") {
     const Result r = run(ac5());
     CHECK(r.checks.location.status == CheckStatus::Fail);
     CHECK(r.verdict == Verdict::Fail);
 }
 
-TEST_CASE("C-02 AC-6 passes with no driving shear", "[FR-12][C-02]") {
+TEST_CASE("C-02 AC-6 passes with no driving shear", "[FR-XX][C-02]") {
     const Result r = run(ac1(0.0));
     CHECK(r.checks.sliding.status == CheckStatus::Pass);
     CHECK(r.verdict == Verdict::Pass);
 }
 
-TEST_CASE("C-02 location boundaries flip exactly at the threshold", "[FR-12][C-02]") {
+TEST_CASE("C-02 location boundaries flip exactly at the threshold", "[FR-XX][C-02]") {
     const Length base(5.0);
     const Contact full{ContactState::Full, base, Pressure(1.0), Pressure(1.0)};
     auto resultant_at = [&](double x) {
@@ -279,7 +279,7 @@ TEST_CASE("C-02 location boundaries flip exactly at the threshold", "[FR-12][C-0
     CHECK(check_location(resultant_at(3.75), full, ResultantZone::MiddleHalf).status == CheckStatus::Pass);
 }
 
-TEST_CASE("C-02 sliding boundary flips exactly at the minimum", "[FR-12][C-02]") {
+TEST_CASE("C-02 sliding boundary flips exactly at the minimum", "[FR-XX][C-02]") {
     CHECK(check_sliding(SlidingResult{2.0}, 2.0).status == CheckStatus::Pass);
     CHECK(check_sliding(SlidingResult{std::nextafter(2.0, 0.0)}, 2.0).status == CheckStatus::Fail);
     CHECK(check_sliding(SlidingResult{std::nullopt}, 2.0).status == CheckStatus::Pass);
@@ -313,7 +313,7 @@ TEST_CASE("C-04 bearing through analyze", "[FR-14][C-04]") {
     CHECK(run(s).checks.bearing.status == CheckStatus::Pass);
 }
 
-TEST_CASE("C-05 verdict: any failed check fails, skipped checks do not", "[FR-12][C-05]") {
+TEST_CASE("C-05 verdict: any failed check fails, skipped checks do not", "[FR-XX][C-05]") {
     const LocationCheck pass_loc{CheckStatus::Pass, model::ResultantZone::MiddleThird, Length(0), Length(1)};
     const SlidingCheck pass_slide{CheckStatus::Pass, 3.0, 2.0};
     const BearingCheck skipped{CheckStatus::Skipped, Pressure(0.0), std::nullopt};
