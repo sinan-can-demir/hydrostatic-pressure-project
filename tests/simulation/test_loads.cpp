@@ -12,6 +12,7 @@
 #include "simulation/PressureDistribution.hpp"
 #include "simulation/SelfWeight.hpp"
 #include "simulation/TailwaterLoad.hpp"
+#include "simulation/UpliftLoad.hpp"
 #include "simulation/WaterLoad.hpp"
 #include "units/Length.hpp"
 
@@ -272,4 +273,119 @@ TEST_CASE("TW-04 tailwater honours the fluid density and gravity", "[FR-03][TW-0
 TEST_CASE("TW-03 the TailwaterLoad is deterministic", "[NFR-03][TW-03]") {
     const Scenario s = with_tailwater(scenario({P(0, 0), P(7, 0), P(0, 10)}, 10.0), 3.0);
     CHECK(simulation::TailwaterLoad{}.contributions(s) == simulation::TailwaterLoad{}.contributions(s));
+}
+
+// ---- UpliftLoad (v1.1, FR-24; AC-1 dam, B = 5, H1 = 10, rho g = 9810) -----------------------------
+//
+// Hand values (docs/09 section 6, checked by an independent integration script). The uplift is a
+// single upward force at the centroid of the pressure diagram; its moment about the toe (x = 5) is
+// fy * (x - 5). Heads are in metres of water; areas below are head * length.
+
+namespace {
+
+Scenario with_uplift(Scenario s, std::optional<model::Drains> drains = std::nullopt) {
+    s.uplift = model::Uplift{drains};
+    return s;
+}
+
+model::Drains drains(double e, double x, double h4 = 0.0) { return model::Drains{e, Length(x), Length(h4)}; }
+
+double toe_moment(const ForceContribution& c) { return c.fy.n_per_m * (c.point.x.meters - 5.0); }
+
+const ForceContribution& uplift_of(const std::vector<ForceContribution>& all) {
+    const ForceContribution* u = find(all, "uplift");
+    REQUIRE(u != nullptr);
+    return *u;
+}
+
+} // namespace
+
+TEST_CASE("UP-02 UpliftLoad emits nothing unless uplift is requested", "[FR-24][NFR-12][UP-02]") {
+    CHECK(simulation::UpliftLoad{}.contributions(ac1()).empty());
+    Scenario tail_only = ac1();
+    tail_only.tailwater_depth = Length(3.0);
+    CHECK(simulation::UpliftLoad{}.contributions(tail_only).empty());
+}
+
+TEST_CASE("UP-02 AU-1 no drains, no tailwater", "[FR-24][UP-02]") {
+    const auto all = simulation::UpliftLoad{}.contributions(with_uplift(ac1()));
+    REQUIRE(all.size() == 1);
+    const ForceContribution& u = uplift_of(all);
+    CHECK_THAT(u.fy.n_per_m, WithinRel(245250.0, 1e-12)); // 9810 * 5 * (10 + 0) / 2, upward
+    CHECK(u.fx.n_per_m == 0.0);
+    CHECK_THAT(toe_moment(u), WithinRel(-817500.0, 1e-12));
+    CHECK_THAT(u.point.y.meters, WithinAbs(0.0, 1e-12));
+}
+
+TEST_CASE("UP-02 AU-2 tailwater changes only the toe ordinate", "[FR-24][UP-02]") {
+    Scenario s = with_uplift(ac1());
+    s.tailwater_depth = Length(3.0);
+    const ForceContribution u = uplift_of(simulation::UpliftLoad{}.contributions(s));
+    CHECK_THAT(u.fy.n_per_m, WithinRel(318825.0, 1e-12)); // 9810 * 5 * (10 + 3) / 2
+    CHECK_THAT(toe_moment(u), WithinRel(-940125.0, 1e-12));
+}
+
+TEST_CASE("UP-03 AU-3 drains E = 0.5 at X = 1 m", "[FR-24][FR-25][UP-03]") {
+    // H3 = 0.5 * 10 * 4 / 5 = 4: heads 10 -> 4 over 1 m (area 7) and 4 -> 0 over 4 m (area 8).
+    const ForceContribution u =
+        uplift_of(simulation::UpliftLoad{}.contributions(with_uplift(ac1(), drains(0.5, 1.0))));
+    CHECK_THAT(u.fy.n_per_m, WithinRel(147150.0, 1e-12));
+    CHECK_THAT(toe_moment(u), WithinRel(-523200.0, 1e-12));
+}
+
+TEST_CASE("UP-03 gallery above the tailwater raises the drain-line head", "[FR-24][UP-03]") {
+    // H4 = 6 > H2 = 0, so H' = 6 and H3 = 0.5 * (10 - 6) * 4 / 5 + 6 = 7.6:
+    // 10 -> 7.6 over 1 m (8.8) and 7.6 -> 0 over 4 m (15.2); moment about heel 119/3 head-m^2.
+    const ForceContribution u =
+        uplift_of(simulation::UpliftLoad{}.contributions(with_uplift(ac1(), drains(0.5, 1.0, 6.0))));
+    CHECK_THAT(u.fy.n_per_m, WithinRel(9810.0 * 24.0, 1e-12));
+    CHECK_THAT(toe_moment(u), WithinRel(9810.0 * (119.0 / 3.0 - 120.0), 1e-12));
+}
+
+TEST_CASE("UP-03 gallery below the tailwater leaves the tailwater as the floor", "[FR-24][UP-03]") {
+    // H2 = 3, H4 = 1 < H2, so H' = 3 and H3 = 0.5 * 7 * 4 / 5 + 3 = 5.8:
+    // 10 -> 5.8 over 1 m (7.9) and 5.8 -> 3 over 4 m (17.6): 25.5 head-m.
+    Scenario s = with_uplift(ac1(), drains(0.5, 1.0, 1.0));
+    s.tailwater_depth = Length(3.0);
+    const ForceContribution u = uplift_of(simulation::UpliftLoad{}.contributions(s));
+    CHECK_THAT(u.fy.n_per_m, WithinRel(9810.0 * 25.5, 1e-12));
+}
+
+TEST_CASE("UP-04 AU-5 drains within 0.05 H1 of the heel use one straight line", "[FR-24][UP-04]") {
+    // X = 0.2 <= 0.05 * 10: H3 = 0.5 * 10 = 5 at the heel, straight to 0 at the toe (12.5 head-m).
+    const ForceContribution u =
+        uplift_of(simulation::UpliftLoad{}.contributions(with_uplift(ac1(), drains(0.5, 0.2))));
+    CHECK_THAT(u.fy.n_per_m, WithinRel(122625.0, 1e-12));
+    CHECK_THAT(toe_moment(u), WithinRel(-408750.0, 1e-12));
+}
+
+TEST_CASE("UP-04 the threshold X = 0.05 H1 selects the two rules", "[FR-24][UP-04]") {
+    // X = 0.5 is exactly 0.05 * 10: single line (same as AU-5). X = 0.51 is bilinear:
+    // H3 = 4.49; areas 3.69495 + 10.08005 = 13.775 head-m.
+    const ForceContribution at =
+        uplift_of(simulation::UpliftLoad{}.contributions(with_uplift(ac1(), drains(0.5, 0.5))));
+    CHECK_THAT(at.fy.n_per_m, WithinRel(122625.0, 1e-12));
+    const ForceContribution above =
+        uplift_of(simulation::UpliftLoad{}.contributions(with_uplift(ac1(), drains(0.5, 0.51))));
+    CHECK_THAT(above.fy.n_per_m, WithinRel(9810.0 * 13.775, 1e-12));
+}
+
+TEST_CASE("UP-03 a toe drain (X = B) and an effectiveness of 1 are handled", "[FR-24][UP-03]") {
+    // X = B: H3 = H' = 0 at the toe, so the diagram is the undrained triangle in two parts.
+    const ForceContribution toe =
+        uplift_of(simulation::UpliftLoad{}.contributions(with_uplift(ac1(), drains(0.5, 5.0))));
+    CHECK_THAT(toe.fy.n_per_m, WithinRel(9810.0 * (10.0 + 0.0) / 2.0 * 5.0, 1e-12));
+    // E = 1: the drain line is at H', so the heel-to-drain part is 10 -> 0 over 1 m (5), then 0.
+    const ForceContribution full =
+        uplift_of(simulation::UpliftLoad{}.contributions(with_uplift(ac1(), drains(1.0, 1.0))));
+    CHECK_THAT(full.fy.n_per_m, WithinRel(9810.0 * 5.0, 1e-12));
+}
+
+TEST_CASE("UP-03 the UpliftLoad is deterministic and uses the fluid properties", "[NFR-03][UP-03]") {
+    Scenario s = with_uplift(ac1(), drains(0.5, 1.0));
+    CHECK(simulation::UpliftLoad{}.contributions(s) == simulation::UpliftLoad{}.contributions(s));
+    s.fluid.density = Density(1025.0);
+    s.fluid.gravity = Acceleration(9.80665);
+    const ForceContribution u = uplift_of(simulation::UpliftLoad{}.contributions(s));
+    CHECK_THAT(u.fy.n_per_m, WithinRel(1025.0 * 9.80665 * 15.0, 1e-12));
 }

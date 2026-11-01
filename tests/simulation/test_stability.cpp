@@ -476,7 +476,7 @@ TEST_CASE("FR-23 the overturning report lists the tailwater term as resisting", 
         if (c.source == "tailwater (horizontal)") found = true;
     }
     CHECK(found);
-    // Uplift is not modelled yet in this slice, so the v1 warning stays.
+    // Uplift is not requested, so the v1 warning stays.
     REQUIRE(r.warnings.size() == 1);
 }
 
@@ -485,4 +485,135 @@ TEST_CASE("NFR-12 a scenario without tailwater gives exactly the v1 contribution
     REQUIRE(r.contributions.size() == 2);
     CHECK(r.contributions[0].source == "water (horizontal)");
     CHECK(r.contributions[1].source == "self weight");
+}
+
+// ---- uplift through the whole pipeline (v1.1, FR-24, FR-26, FR-27, FR-28, FR-15; AU-1..AU-5) ------
+//
+// AC-1 dam: W = 1 175 000, resisting moment 2 937 500, water Fx 490 500 with moment -1 635 000.
+// V = W - U, M = 1 302 500 + uplift moment, x_R = M / V, FS = V tan 35 / H.
+
+namespace {
+
+Scenario with_uplift(Scenario s, std::optional<model::Drains> d = std::nullopt, double tail = -1.0) {
+    s.uplift = model::Uplift{d};
+    if (tail >= 0.0) s.tailwater_depth = Length(tail);
+    return s;
+}
+
+bool has_warning(const Result& r, const std::string& needle) {
+    for (const std::string& w : r.warnings) {
+        if (w.find(needle) != std::string::npos) return true;
+    }
+    return false;
+}
+
+void check_case(const Result& r, double v, double h, double m, double xr, double fs) {
+    CHECK_THAT(r.resultant.vertical.n_per_m, WithinRel(v, 1e-12));
+    CHECK_THAT(r.resultant.horizontal.n_per_m, WithinRel(h, 1e-12));
+    CHECK_THAT(r.resultant.moment_about_toe.n_m_per_m, WithinRel(m, 1e-12));
+    REQUIRE(r.resultant.x_from_toe.has_value());
+    CHECK_THAT(r.resultant.x_from_toe->meters, WithinRel(xr, 1e-4));
+    REQUIRE(r.sliding.factor_of_safety.has_value());
+    CHECK_THAT(*r.sliding.factor_of_safety, WithinRel(fs, 1e-4));
+}
+
+} // namespace
+
+TEST_CASE("UP-07 AU-1 uplift without drains", "[FR-24][FR-26][UP-07]") {
+    check_case(run(with_uplift(ac1())), 929750.0, 490500.0, 485000.0, 0.5216, 1.3273);
+}
+
+TEST_CASE("UP-07 AU-2 uplift with 3 m of tailwater", "[FR-24][FR-26][UP-07]") {
+    check_case(run(with_uplift(ac1(), std::nullopt, 3.0)), 856175.0, 446355.0, 406520.0, 0.4748, 1.3431);
+}
+
+TEST_CASE("UP-07 AU-3 uplift with drains", "[FR-24][FR-25][FR-26][UP-07]") {
+    check_case(run(with_uplift(ac1(), model::Drains{0.5, Length(1.0), Length(0.0)})), 1027850.0, 490500.0,
+               779300.0, 0.7582, 1.4673);
+}
+
+TEST_CASE("UP-07 AU-5 drains close to the heel", "[FR-24][FR-26][UP-07]") {
+    check_case(run(with_uplift(ac1(), model::Drains{0.5, Length(0.2), Length(0.0)})), 1052375.0, 490500.0,
+               893750.0, 0.8493, 1.5023);
+}
+
+TEST_CASE("UP-07 the overturning report lists the uplift term as overturning", "[FR-26][FR-27][UP-07]") {
+    const Result r = run(with_uplift(ac1(), model::Drains{0.5, Length(1.0), Length(0.0)}, 3.0));
+    const OverturningTerm* uplift = nullptr;
+    const OverturningTerm* tail = nullptr;
+    for (const OverturningTerm& t : r.overturning.terms) {
+        if (t.source == "uplift") uplift = &t;
+        if (t.source == "tailwater (horizontal)") tail = &t;
+    }
+    REQUIRE(uplift != nullptr);
+    REQUIRE(tail != nullptr);
+    CHECK(uplift->direction == ForceDirection::Vertical);
+    CHECK(uplift->role == MomentRole::Overturning);
+    CHECK(uplift->moment.n_m_per_m < 0.0);
+    CHECK_THAT(uplift->force.n_per_m, WithinRel(9810.0 * 25.5, 1e-12)); // heads 7.9 + 17.6 (H3 = 5.8)
+    CHECK(tail->role == MomentRole::Resisting);
+}
+
+TEST_CASE("W-01a the model statement replaces the v1 warning when uplift is modelled",
+          "[FR-15][UP-09][W-01a]") {
+    const Result plain = run(ac1());
+    CHECK(has_warning(plain, "uplift not modelled"));
+
+    const Result modelled = run(with_uplift(ac1()));
+    CHECK_FALSE(has_warning(modelled, "uplift not modelled"));
+    CHECK(has_warning(modelled, "uplift modelled"));
+}
+
+TEST_CASE("UP-09 partial contact adds the unconservative-uplift warning, full contact does not",
+          "[FR-28][UP-09]") {
+    const Result partial = run(with_uplift(ac1())); // AU-1: contact length 3 x_R < B
+    CHECK(partial.contact.state == ContactState::Partial);
+    CHECK(has_warning(partial, "not fully in compression"));
+
+    // A wide base keeps the resultant in the middle third, so the whole base is in contact.
+    Scenario wide = scenario({P(0, 0), P(20, 0), P(20, 10), P(0, 10)}, 4.0);
+    const Result full = run(with_uplift(wide));
+    CHECK(full.contact.state == ContactState::Full);
+    CHECK_FALSE(has_warning(full, "not fully in compression"));
+    CHECK(has_warning(full, "uplift modelled"));
+}
+
+TEST_CASE("UP-09 uplift larger than the weight reports an unstable result", "[FR-28][UP-09]") {
+    Scenario s = with_uplift(ac1());
+    s.concrete.unit_weight = UnitWeight(3000.0); // W = 150 000 < U = 245 250
+    const Result r = run(s);
+    CHECK(r.resultant.vertical.n_per_m < 0.0);
+    CHECK(r.contact.state == ContactState::None);
+    CHECK(r.verdict == Verdict::Fail);
+    CHECK(has_warning(r, "not fully in compression"));
+}
+
+TEST_CASE("UP-08 drain effectiveness outside the standard's range adds warnings, never changes E",
+          "[FR-25][UP-08]") {
+    auto warnings_for = [](double e) {
+        Scenario s = with_uplift(ac1(), model::Drains{e, Length(1.0), Length(0.0)});
+        const Result r = run(s);
+        CHECK(r.scenario.uplift->drains->effectiveness == e);
+        return r;
+    };
+    for (double e : {0.25, 0.30, 0.50}) {
+        const Result r = warnings_for(e);
+        CHECK_FALSE(has_warning(r, "drain effectiveness"));
+    }
+    for (double e : {0.24, 0.51, 0.67}) {
+        const Result r = warnings_for(e);
+        CHECK(has_warning(r, "outside the 25 to 50 percent range"));
+        CHECK_FALSE(has_warning(r, "above 67 percent"));
+    }
+    const Result high = warnings_for(0.68);
+    CHECK(has_warning(high, "above 67 percent"));
+}
+
+TEST_CASE("N-05 v1 scenarios are unchanged with the uplift and tailwater loads registered",
+          "[NFR-12][N-05]") {
+    const Result r = run(ac1());
+    REQUIRE(r.contributions.size() == 2);
+    CHECK_THAT(r.resultant.vertical.n_per_m, WithinRel(1175000.0, 1e-12));
+    REQUIRE(r.warnings.size() == 1);
+    CHECK(r.warnings[0] == "uplift not modelled; results are unconservative for real dams");
 }
