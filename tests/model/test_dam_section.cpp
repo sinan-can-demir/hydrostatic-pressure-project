@@ -91,6 +91,42 @@ TEST_CASE("upstream face runs from heel to crest", "[FR-05][G-02]") {
     check_point(f5[3], 2, 10);
 }
 
+TEST_CASE("downstream face runs from toe to crest", "[FR-22][TW-02][G-02]") {
+    const DamSection vertical{{P(0, 0), P(5, 0), P(5, 10), P(0, 10)}};
+    const auto f1 = vertical.downstream_face();
+    REQUIRE(f1.size() == 2);
+    check_point(f1[0], 5, 0);
+    check_point(f1[1], 5, 10);
+
+    // The crest corner on the downstream face is the downstream-most of the top vertices.
+    const DamSection inclined{{P(0, 0), P(5, 0), P(5, 10), P(2, 10)}};
+    const auto f2 = inclined.downstream_face();
+    REQUIRE(f2.size() == 2);
+    check_point(f2[1], 5, 10);
+
+    // A triangle with its apex above the heel: the whole sloping edge is the downstream face.
+    const DamSection triangle{{P(0, 0), P(7, 0), P(0, 10)}};
+    const auto f3 = triangle.downstream_face();
+    REQUIRE(f3.size() == 2);
+    check_point(f3[0], 7, 0);
+    check_point(f3[1], 0, 10);
+
+    // A stepped face keeps its corners, toe first.
+    const DamSection stepped{{P(0, 0), P(8, 0), P(8, 4), P(5, 4), P(5, 10), P(0, 10)}};
+    const auto f4 = stepped.downstream_face();
+    REQUIRE(f4.size() == 4);
+    check_point(f4[1], 8, 4);
+    check_point(f4[2], 5, 4);
+    check_point(f4[3], 5, 10);
+
+    // Starting the vertex list elsewhere gives the same face.
+    const DamSection shifted{{P(5, 10), P(0, 10), P(0, 0), P(5, 0)}};
+    const auto f5 = shifted.downstream_face();
+    REQUIRE(f5.size() == 2);
+    check_point(f5[0], 5, 0);
+    check_point(f5[1], 5, 10);
+}
+
 TEST_CASE("starting the vertex list elsewhere gives the same section", "[FR-01][P-02]") {
     const DamSection a{{P(0, 0), P(5, 0), P(5, 10), P(2, 10)}};
     const DamSection b{{P(5, 10), P(2, 10), P(0, 0), P(5, 0)}};

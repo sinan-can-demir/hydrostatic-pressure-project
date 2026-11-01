@@ -47,6 +47,31 @@ std::size_t crest_index(const DamSection& s) {
     return best;
 }
 
+// The downstream-most of the highest vertices: where the downstream face meets the crest.
+std::size_t downstream_crest_index(const DamSection& s) {
+    const double tol = math::geometric_tolerance(s.vertices).meters;
+    double max_y = s.vertices[0].y.meters;
+    for (const math::Point2& p : s.vertices) max_y = std::max(max_y, p.y.meters);
+
+    std::size_t best = 0;
+    bool found = false;
+    for (std::size_t i = 0; i < s.vertices.size(); ++i) {
+        if (s.vertices[i].y.meters < max_y - tol) continue;
+        if (!found || s.vertices[i].x.meters > s.vertices[best].x.meters) {
+            best = i;
+            found = true;
+        }
+    }
+    return best;
+}
+
+// Index of the toe: of the two base vertices, the one with the larger x.
+std::size_t toe_index(const DamSection& s) {
+    const std::vector<std::size_t> base = s.base_vertex_indices();
+    if (base.size() < 2) return 0;
+    return s.vertices[base[0]].x.meters > s.vertices[base[1]].x.meters ? base[0] : base[1];
+}
+
 } // namespace
 
 math::Point2 DamSection::heel() const { return vertices.empty() ? kOrigin : vertices[heel_index(*this)]; }
@@ -84,6 +109,21 @@ std::vector<math::Point2> DamSection::upstream_face() const {
         face.push_back(vertices[i]);
     }
     std::ranges::reverse(face);
+    return face;
+}
+
+std::vector<math::Point2> DamSection::downstream_face() const {
+    std::vector<math::Point2> face;
+    if (vertices.size() < 3) return face;
+
+    // Counter-clockwise order runs heel, toe, then up the downstream side to the crest.
+    const std::size_t crest = downstream_crest_index(*this);
+    std::size_t i = toe_index(*this);
+    face.push_back(vertices[i]);
+    while (i != crest) {
+        i = (i + 1) % vertices.size();
+        face.push_back(vertices[i]);
+    }
     return face;
 }
 

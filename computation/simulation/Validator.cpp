@@ -121,6 +121,19 @@ void validate_section(const model::DamSection& section, Errors& errors) {
                 break;
             }
         }
+
+        // Going from the toe up to the crest the downstream face must not drop (FR-22), so the
+        // wetted surface under tailwater is well defined.
+        const std::vector<math::Point2> down = section.downstream_face();
+        for (std::size_t k = 0; k + 1 < down.size(); ++k) {
+            if (down[k + 1].y.meters < down[k].y.meters - tol) {
+                add(errors, ErrorCode::DownstreamFaceRises, path,
+                    std::format("the downstream face drops from y = {:g} m to y = {:g} m going up from the "
+                                "toe; its elevation must not decrease between the toe and the crest",
+                                down[k].y.meters, down[k + 1].y.meters));
+                break;
+            }
+        }
     }
 }
 
@@ -193,13 +206,90 @@ void validate_parameters(const model::Scenario& s, Errors& errors) {
     }
 }
 
+// A finite, in-range number; reports and returns false otherwise.
+bool usable_number(Errors& errors, double value, const std::string& path) {
+    if (!finite(errors, value, path)) return false;
+    if (std::fabs(value) > kMaxCoordinateMeters) {
+        add(errors, ErrorCode::ValueOutOfRange, path,
+            std::format("{} is beyond +/-{:g} m", path, kMaxCoordinateMeters));
+        return false;
+    }
+    return true;
+}
+
+// True when the section's numbers are finite enough to take its tolerance and base length.
+bool section_usable(const model::DamSection& section) {
+    const auto& v = section.vertices;
+    return v.size() >= 3 && std::ranges::all_of(v, [](const math::Point2& p) {
+               return std::isfinite(p.x.meters) && std::isfinite(p.y.meters);
+           });
+}
+
+void validate_tailwater(const model::Scenario& s, bool section_ok, Errors& errors) {
+    if (!s.tailwater_depth) return;
+    const std::string path = "tailwater_depth_m";
+    const double depth = s.tailwater_depth->meters;
+    if (!usable_number(errors, depth, path)) return;
+    if (depth < 0.0) {
+        add(errors, ErrorCode::TailwaterNegative, path,
+            "the tailwater depth must not be below the base (y = 0)");
+        return;
+    }
+
+    // Compare with the upstream water level only when that value is itself sound.
+    const double level = s.water_level.elevation.meters;
+    if (!std::isfinite(level) || std::fabs(level) > kMaxCoordinateMeters) return;
+    const double tol = section_ok ? math::geometric_tolerance(s.section.vertices).meters : 0.0;
+    if (depth > level + tol) {
+        add(errors, ErrorCode::TailwaterAboveWaterLevel, path,
+            std::format("the tailwater depth {:g} m is above the upstream water level {:g} m", depth, level));
+    }
+}
+
+void validate_drains(const model::Scenario& s, bool section_ok, Errors& errors) {
+    if (!s.uplift || !s.uplift->drains) return;
+    const model::Drains& d = *s.uplift->drains;
+
+    const std::string e_path = "uplift.drains.effectiveness";
+    if (finite(errors, d.effectiveness, e_path) && (d.effectiveness <= 0.0 || d.effectiveness > 1.0)) {
+        add(errors, ErrorCode::DrainEffectivenessOutOfRange, e_path,
+            std::format("the drain effectiveness must be greater than 0 and at most 1, got {:g}",
+                        d.effectiveness));
+    }
+
+    const std::string x_path = "uplift.drains.distance_from_heel_m";
+    if (usable_number(errors, d.distance_from_heel.meters, x_path)) {
+        const double x = d.distance_from_heel.meters;
+        if (x < 0.0) {
+            add(errors, ErrorCode::DrainDistanceOutOfRange, x_path,
+                std::format("the drain line must not be upstream of the heel, got {:g} m", x));
+        } else if (section_ok) {
+            const double base = s.section.base_length().meters;
+            if (x > base + math::geometric_tolerance(s.section.vertices).meters) {
+                add(errors, ErrorCode::DrainDistanceOutOfRange, x_path,
+                    std::format("the drain line at {:g} m is beyond the toe; the base is {:g} m long", x,
+                                base));
+            }
+        }
+    }
+
+    const std::string g_path = "uplift.drains.gallery_elevation_m";
+    if (usable_number(errors, d.gallery_elevation.meters, g_path) && d.gallery_elevation.meters < 0.0) {
+        add(errors, ErrorCode::GalleryElevationNegative, g_path,
+            "the drain-line elevation must not be below the base (y = 0)");
+    }
+}
+
 } // namespace
 
 std::vector<ValidationError> validate(const model::Scenario& scenario) {
     Errors errors;
     validate_section(scenario.section, errors);
+    const bool section_ok = errors.empty() && section_usable(scenario.section);
     validate_water_level(scenario, errors);
     validate_parameters(scenario, errors);
+    validate_tailwater(scenario, section_ok, errors);
+    validate_drains(scenario, section_ok, errors);
     return errors;
 }
 

@@ -265,6 +265,12 @@ TEST_CASE("every error code has its documented stable name", "[V-01][FR-19]") {
         {ErrorCode::NonPositiveAllowableBearing, "non_positive_allowable_bearing"},
         {ErrorCode::NonPositiveSlidingFs, "non_positive_sliding_fs"},
         {ErrorCode::PressureSamplesOutOfRange, "pressure_samples_out_of_range"},
+        {ErrorCode::DownstreamFaceRises, "downstream_face_rises"},
+        {ErrorCode::TailwaterNegative, "tailwater_negative"},
+        {ErrorCode::TailwaterAboveWaterLevel, "tailwater_above_water_level"},
+        {ErrorCode::DrainEffectivenessOutOfRange, "drain_effectiveness_out_of_range"},
+        {ErrorCode::DrainDistanceOutOfRange, "drain_distance_out_of_range"},
+        {ErrorCode::GalleryElevationNegative, "gallery_elevation_negative"},
     };
     for (const auto& [code, name] : names) CHECK(simulation::to_string(code) == name);
 }
@@ -275,4 +281,157 @@ TEST_CASE("a water level beyond the coordinate limit is rejected", "[NFR-10][V-0
     const auto errors = simulation::validate(s);
     REQUIRE(has(errors, ErrorCode::ValueOutOfRange));
     CHECK(find(errors, ErrorCode::ValueOutOfRange)->path == "water_level_m");
+}
+
+// ---- tailwater and uplift inputs (v1.1, docs/09, test plan section 11) ----------------------
+
+namespace {
+
+model::Scenario with_tailwater(double depth) {
+    model::Scenario s = ac1();
+    s.tailwater_depth = Length(depth);
+    return s;
+}
+
+model::Scenario with_drains(double effectiveness, double distance, double gallery = 0.0) {
+    model::Scenario s = ac1();
+    s.uplift = model::Uplift{model::Drains{effectiveness, Length(distance), Length(gallery)}};
+    return s;
+}
+
+} // namespace
+
+TEST_CASE("tailwater and uplift are absent by default and a scenario without them is unchanged",
+          "[FR-22][NFR-12][TW-01]") {
+    const model::Scenario s = ac1();
+    CHECK_FALSE(s.tailwater_depth.has_value());
+    CHECK_FALSE(s.uplift.has_value());
+    CHECK(simulation::validate(s).empty());
+}
+
+TEST_CASE("a tailwater depth from zero up to the water level is accepted", "[FR-22][TW-01]") {
+    CHECK(simulation::validate(with_tailwater(0.0)).empty());
+    CHECK(simulation::validate(with_tailwater(3.0)).empty());
+    CHECK(simulation::validate(with_tailwater(10.0)).empty()); // equal to Hw: no head difference
+}
+
+TEST_CASE("a bad tailwater depth is rejected with its own code and path", "[FR-22][TW-01][V-01]") {
+    SECTION("negative") {
+        const auto errors = simulation::validate(with_tailwater(-0.5));
+        REQUIRE(has(errors, ErrorCode::TailwaterNegative));
+        CHECK(find(errors, ErrorCode::TailwaterNegative)->path == "tailwater_depth_m");
+    }
+    SECTION("above the water level") {
+        const auto errors = simulation::validate(with_tailwater(10.5));
+        REQUIRE(has(errors, ErrorCode::TailwaterAboveWaterLevel));
+        CHECK(find(errors, ErrorCode::TailwaterAboveWaterLevel)->path == "tailwater_depth_m");
+    }
+    SECTION("above a lower water level") {
+        model::Scenario s = ac1(6.0);
+        s.tailwater_depth = Length(7.0);
+        CHECK(has(simulation::validate(s), ErrorCode::TailwaterAboveWaterLevel));
+    }
+    SECTION("not a number or infinite") {
+        for (const double bad : {kNaN, kInf, -kInf}) {
+            const auto errors = simulation::validate(with_tailwater(bad));
+            REQUIRE(has(errors, ErrorCode::NonFiniteValue));
+            CHECK(find(errors, ErrorCode::NonFiniteValue)->path == "tailwater_depth_m");
+        }
+    }
+    SECTION("beyond the coordinate limit") {
+        const auto errors = simulation::validate(with_tailwater(2.0e6));
+        CHECK(has(errors, ErrorCode::ValueOutOfRange));
+    }
+}
+
+TEST_CASE("a tailwater error is reported together with other errors", "[FR-22][TW-01][V-02]") {
+    model::Scenario s = ac1(10.0, 95.0); // friction angle out of range
+    s.tailwater_depth = Length(-1.0);
+    const auto errors = simulation::validate(s);
+    CHECK(has(errors, ErrorCode::FrictionAngleOutOfRange));
+    CHECK(has(errors, ErrorCode::TailwaterNegative));
+}
+
+TEST_CASE("the tailwater is not compared with an invalid water level", "[FR-22][TW-01]") {
+    model::Scenario s = ac1(kNaN);
+    s.tailwater_depth = Length(3.0);
+    const auto errors = simulation::validate(s);
+    CHECK(has(errors, ErrorCode::NonFiniteValue));
+    CHECK_FALSE(has(errors, ErrorCode::TailwaterAboveWaterLevel));
+}
+
+TEST_CASE("a downstream face that rises toward the toe is rejected", "[FR-22][TW-02][V-01]") {
+    // Walking down from the crest (5,10) the face drops to (6,4), then climbs back to (8,8), then drops to
+    // the toe (8,0). Going down toward the toe it must never climb.
+    const auto errors =
+        simulation::validate(scenario({P(0, 0), P(8, 0), P(8, 8), P(6, 4), P(5, 10), P(0, 10)}));
+    REQUIRE(errors.size() == 1);
+    CHECK(errors[0].code == ErrorCode::DownstreamFaceRises);
+}
+
+TEST_CASE("vertical, sloping and stepped downstream faces are accepted", "[FR-22][TW-02]") {
+    CHECK(simulation::validate(ac1()).empty());                                  // vertical
+    CHECK(simulation::validate(scenario({P(0, 0), P(7, 0), P(0, 10)})).empty()); // sloping
+    CHECK(simulation::validate(scenario({P(0, 0), P(8, 0), P(8, 4), P(5, 4), P(5, 10), P(0, 10)}))
+              .empty()); // stepped but never rising toward the toe
+}
+
+TEST_CASE("drains with a valid effectiveness and position are accepted", "[FR-25][UP-01]") {
+    CHECK(simulation::validate(with_drains(0.5, 1.0)).empty());
+    CHECK(simulation::validate(with_drains(1.0, 0.0)).empty());  // E = 1 at the heel
+    CHECK(simulation::validate(with_drains(0.25, 5.0)).empty()); // X = B
+    CHECK(simulation::validate(with_drains(0.5, 1.0, 2.0)).empty());
+}
+
+TEST_CASE("uplift without a drains block is a valid request for undrained uplift", "[FR-24][FR-25][UP-01]") {
+    model::Scenario s = ac1();
+    s.uplift = model::Uplift{};
+    CHECK_FALSE(s.uplift->drains.has_value());
+    CHECK(simulation::validate(s).empty());
+}
+
+TEST_CASE("bad drain data is rejected with distinct codes and paths", "[FR-25][UP-01][V-01]") {
+    SECTION("effectiveness zero, negative or above one") {
+        for (const double e : {0.0, -0.1, 1.0001}) {
+            const auto errors = simulation::validate(with_drains(e, 1.0));
+            REQUIRE(has(errors, ErrorCode::DrainEffectivenessOutOfRange));
+            CHECK(find(errors, ErrorCode::DrainEffectivenessOutOfRange)->path ==
+                  "uplift.drains.effectiveness");
+        }
+    }
+    SECTION("effectiveness not finite") {
+        const auto errors = simulation::validate(with_drains(kNaN, 1.0));
+        REQUIRE(has(errors, ErrorCode::NonFiniteValue));
+        CHECK(find(errors, ErrorCode::NonFiniteValue)->path == "uplift.drains.effectiveness");
+    }
+    SECTION("distance negative or beyond the base length") {
+        for (const double x : {-0.1, 5.1}) {
+            const auto errors = simulation::validate(with_drains(0.5, x));
+            REQUIRE(has(errors, ErrorCode::DrainDistanceOutOfRange));
+            CHECK(find(errors, ErrorCode::DrainDistanceOutOfRange)->path ==
+                  "uplift.drains.distance_from_heel_m");
+        }
+    }
+    SECTION("distance not finite") {
+        const auto errors = simulation::validate(with_drains(0.5, kInf));
+        REQUIRE(has(errors, ErrorCode::NonFiniteValue));
+        CHECK(find(errors, ErrorCode::NonFiniteValue)->path == "uplift.drains.distance_from_heel_m");
+    }
+    SECTION("gallery elevation negative") {
+        const auto errors = simulation::validate(with_drains(0.5, 1.0, -1.0));
+        REQUIRE(has(errors, ErrorCode::GalleryElevationNegative));
+        CHECK(find(errors, ErrorCode::GalleryElevationNegative)->path == "uplift.drains.gallery_elevation_m");
+    }
+    SECTION("gallery elevation not finite") {
+        const auto errors = simulation::validate(with_drains(0.5, 1.0, kNaN));
+        CHECK(has(errors, ErrorCode::NonFiniteValue));
+    }
+}
+
+TEST_CASE("the drain position is not checked against an invalid section", "[FR-25][UP-01]") {
+    model::Scenario s = scenario({P(0, 0)});
+    s.uplift = model::Uplift{model::Drains{0.5, Length(99.0), Length(0.0)}};
+    const auto errors = simulation::validate(s);
+    CHECK(has(errors, ErrorCode::TooFewVertices));
+    CHECK_FALSE(has(errors, ErrorCode::DrainDistanceOutOfRange));
 }

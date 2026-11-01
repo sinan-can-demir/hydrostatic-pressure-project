@@ -34,6 +34,10 @@ struct DamSection {
     // Boundary chain from the heel up to the crest, heel first. The crest vertex is the
     // upstream-most of the highest vertices.
     std::vector<math::Point2> upstream_face() const;
+
+    // Boundary chain from the toe up to the crest, toe first. The crest vertex is the
+    // downstream-most of the highest vertices.
+    std::vector<math::Point2> downstream_face() const;
 };
 
 } // namespace model
