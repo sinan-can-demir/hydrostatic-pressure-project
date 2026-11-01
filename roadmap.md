@@ -11,7 +11,7 @@ Process: each design phase is a gate (documents in `docs/`); implementation is t
 | 3 Use cases | `docs/03-use-cases.md` | approved |
 | 4 Domain model and architecture | `docs/04-domain-model.md`, `docs/05-architecture.md`, `docs/adr/` | approved |
 | 5 Test plan | `docs/06-test-plan.md` | approved |
-| 7 CI pipeline | `docs/08-ci-pipeline.md`, `.github/workflows/ci.yml` | approved; implemented on branch `ci-workflow` (PR #1), first run green |
+| 7 CI pipeline | `docs/08-ci-pipeline.md`, `.github/workflows/ci.yml` | done: merged in PR #1, all seven jobs green; `main` is protected and requires gcc, clang, sanitizers, core-without-io and traceability |
 
 ## Implementation (Phase 6)
 | Slice | Content | Main requirements |
