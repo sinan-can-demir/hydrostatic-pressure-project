@@ -4,6 +4,7 @@ project(hydrostatic_pressure LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # lets clang-tidy find the compile flags
 
 option(HP_BUILD_TESTS "Build the test suite" ON)
 option(HP_BUILD_IO "Build the JSON layer (hp_io) and the command-line tool" ON)

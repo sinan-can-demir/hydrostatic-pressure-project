@@ -1,0 +1,24 @@
+# Static-analysis configuration (NFR-11). Advisory: nothing in CI fails on it yet.
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-throwing-static-initialization,
+  cppcoreguidelines-slicing,
+  cppcoreguidelines-virtual-class-destructor,
+  misc-*,
+  -misc-non-private-member-variables-in-classes,
+  -misc-include-cleaner,
+  -misc-use-anonymous-namespace,
+  modernize-*,
+  -modernize-use-designated-initializers,
+  -modernize-use-nodiscard,
+  -modernize-use-trailing-return-type,
+  performance-*,
+  -performance-enum-size,
+  readability-container-size-empty,
+  readability-redundant-*,
+  readability-misleading-indentation
+WarningsAsErrors: ''
+HeaderFilterRegex: '(computation|io|apps)/.*'
+FormatStyle: file
