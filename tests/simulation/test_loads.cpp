@@ -11,6 +11,7 @@
 #include "simulation/Load.hpp"
 #include "simulation/PressureDistribution.hpp"
 #include "simulation/SelfWeight.hpp"
+#include "simulation/TailwaterLoad.hpp"
 #include "simulation/WaterLoad.hpp"
 #include "units/Length.hpp"
 
@@ -196,4 +197,79 @@ TEST_CASE("loads are deterministic", "[NFR-03]") {
         CHECK(a[i].fx.n_per_m == b[i].fx.n_per_m);
         CHECK(a[i].fy.n_per_m == b[i].fy.n_per_m);
     }
+}
+
+// ---- TailwaterLoad (v1.1, FR-22, FR-23; reference case AU-2) ----------------------------------
+//
+// Independent derivations. Vertical downstream face x = 5, tailwater H2 = 3 m:
+//   Fx = -1/2 * 1000 * 9.81 * 3^2 = -44 145 N/m (towards the upstream side), at 3/3 = 1 m above the base.
+// Sloping downstream face (0,0) (7,0) (0,10), H2 = 3 m: the face rises from the toe (7,0) with slope
+//   dx/dy = -0.7, so the wetted part ends at (4.9, 3). Water above that face fills the triangle
+//   (4.9,3) (7,3) (7,0): area 1/2 * 2.1 * 3 = 3.15 m2, centroid x = (4.9 + 7 + 7)/3 = 6.3 m.
+//   Fy = -9810 * 3.15 = -30 901.5 N/m (downward) acting at x = 6.3; Fx as above, at y = 1 m.
+
+namespace {
+
+Scenario with_tailwater(Scenario s, double depth) {
+    s.tailwater_depth = Length(depth);
+    return s;
+}
+
+} // namespace
+
+TEST_CASE("TW-03 TailwaterLoad on a vertical downstream face (AU-2)", "[FR-23][TW-03]") {
+    const auto all = simulation::TailwaterLoad{}.contributions(with_tailwater(ac1(), 3.0));
+    REQUIRE(all.size() == 1);
+    const auto* h = find(all, "tailwater (horizontal)");
+    REQUIRE(h != nullptr);
+    CHECK_THAT(h->fx.n_per_m, WithinRel(-44145.0, 1e-12));
+    CHECK(h->fy.n_per_m == 0.0);
+    CHECK_THAT(h->point.y.meters, WithinRel(1.0, 1e-12));
+    CHECK_THAT(h->point.x.meters, WithinRel(5.0, 1e-12));
+    // A vertical face carries no vertical water force, so none is reported.
+    CHECK(find(all, "tailwater (vertical)") == nullptr);
+}
+
+TEST_CASE("TW-03 no tailwater, or tailwater of zero depth, adds nothing", "[FR-22][FR-23][NFR-12][TW-03]") {
+    CHECK(simulation::TailwaterLoad{}.contributions(ac1()).empty());
+    CHECK(simulation::TailwaterLoad{}.contributions(with_tailwater(ac1(), 0.0)).empty());
+}
+
+TEST_CASE("TW-03 tailwater at the full water level equals the upstream force with the sign reversed",
+          "[FR-23][TW-03]") {
+    const auto up = simulation::WaterLoad{}.contributions(ac1(10.0));
+    const auto down = simulation::TailwaterLoad{}.contributions(with_tailwater(ac1(10.0), 10.0));
+    REQUIRE(up.size() == 1);
+    REQUIRE(down.size() == 1);
+    CHECK_THAT(down[0].fx.n_per_m, WithinRel(-up[0].fx.n_per_m, 1e-12));
+    CHECK_THAT(down[0].point.y.meters, WithinRel(up[0].point.y.meters, 1e-12));
+}
+
+TEST_CASE("TW-04 TailwaterLoad on a sloping downstream face", "[FR-23][TW-04]") {
+    const Scenario triangle = with_tailwater(scenario({P(0, 0), P(7, 0), P(0, 10)}, 10.0), 3.0);
+    const auto all = simulation::TailwaterLoad{}.contributions(triangle);
+    REQUIRE(all.size() == 2);
+    const auto* h = find(all, "tailwater (horizontal)");
+    const auto* v = find(all, "tailwater (vertical)");
+    REQUIRE(h != nullptr);
+    REQUIRE(v != nullptr);
+    CHECK_THAT(h->fx.n_per_m, WithinRel(-44145.0, 1e-12));
+    CHECK_THAT(h->point.y.meters, WithinRel(1.0, 1e-12));
+    CHECK_THAT(v->fy.n_per_m, WithinRel(-30901.5, 1e-12));
+    CHECK(v->fx.n_per_m == 0.0);
+    CHECK_THAT(v->point.x.meters, WithinRel(6.3, 1e-12));
+}
+
+TEST_CASE("TW-04 tailwater honours the fluid density and gravity", "[FR-03][TW-04]") {
+    Scenario s = with_tailwater(ac1(), 3.0);
+    s.fluid.density = Density(1025.0);
+    s.fluid.gravity = Acceleration(9.80665);
+    const auto all = simulation::TailwaterLoad{}.contributions(s);
+    REQUIRE(all.size() == 1);
+    CHECK_THAT(all[0].fx.n_per_m, WithinRel(-0.5 * 1025.0 * 9.80665 * 9.0, 1e-12));
+}
+
+TEST_CASE("TW-03 the TailwaterLoad is deterministic", "[NFR-03][TW-03]") {
+    const Scenario s = with_tailwater(scenario({P(0, 0), P(7, 0), P(0, 10)}, 10.0), 3.0);
+    CHECK(simulation::TailwaterLoad{}.contributions(s) == simulation::TailwaterLoad{}.contributions(s));
 }

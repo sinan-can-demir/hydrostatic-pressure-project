@@ -3,6 +3,7 @@
 #include <utility>
 
 #include "SelfWeight.hpp"
+#include "TailwaterLoad.hpp"
 #include "Validator.hpp"
 #include "WaterLoad.hpp"
 
@@ -21,6 +22,7 @@ Analyzer Analyzer::with_default_loads() {
     std::vector<std::unique_ptr<Load>> loads;
     loads.push_back(std::make_unique<WaterLoad>());
     loads.push_back(std::make_unique<SelfWeight>());
+    loads.push_back(std::make_unique<TailwaterLoad>()); // emits nothing without a tailwater depth
     return Analyzer(std::move(loads));
 }
 

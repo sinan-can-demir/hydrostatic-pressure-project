@@ -31,7 +31,9 @@ hp_set_warnings(hp_math)
 add_library(hp_core STATIC
     computation/model/DamSection.cpp
     computation/simulation/Validator.cpp
+    computation/simulation/FaceLoad.cpp
     computation/simulation/WaterLoad.cpp
+    computation/simulation/TailwaterLoad.cpp
     computation/simulation/SelfWeight.cpp
     computation/simulation/Resultant.cpp
     computation/simulation/Checks.cpp
