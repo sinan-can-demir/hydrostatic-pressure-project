@@ -31,6 +31,12 @@ enum class ErrorCode {
     NonPositiveAllowableBearing,
     NonPositiveSlidingFs,
     PressureSamplesOutOfRange,
+    DownstreamFaceRises,
+    TailwaterNegative,
+    TailwaterAboveWaterLevel,
+    DrainEffectivenessOutOfRange,
+    DrainDistanceOutOfRange,
+    GalleryElevationNegative,
 };
 
 constexpr std::string_view to_string(ErrorCode code) {
@@ -75,6 +81,18 @@ constexpr std::string_view to_string(ErrorCode code) {
         return "non_positive_sliding_fs";
     case ErrorCode::PressureSamplesOutOfRange:
         return "pressure_samples_out_of_range";
+    case ErrorCode::DownstreamFaceRises:
+        return "downstream_face_rises";
+    case ErrorCode::TailwaterNegative:
+        return "tailwater_negative";
+    case ErrorCode::TailwaterAboveWaterLevel:
+        return "tailwater_above_water_level";
+    case ErrorCode::DrainEffectivenessOutOfRange:
+        return "drain_effectiveness_out_of_range";
+    case ErrorCode::DrainDistanceOutOfRange:
+        return "drain_distance_out_of_range";
+    case ErrorCode::GalleryElevationNegative:
+        return "gallery_elevation_negative";
     }
     return "unknown";
 }

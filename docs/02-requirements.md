@@ -60,6 +60,7 @@ Notes on the source that affect the design:
 | FR-19 | S | The JSON schema shall be documented and versioned (a `schema_version` field). | Unknown versions are rejected with a clear error. |
 | FR-20 | C | The pressure sampling resolution along the face is configurable. | Optional `pressure_samples` yields that many evenly spaced points. |
 | FR-21 | W | Uplift, tailwater, sediment, ice, hydrodynamic and seismic loads, cohesion, overtopping, non-horizontal bases, multi-material sections. | Listed as non-goals; the API leaves extension points (Phase 4). |
+| FR-22 | M | (v1.1, docs/09) The user may specify a tailwater depth H2 (m above base), 0 <= H2 <= Hw; omitted means none. Invalid values (negative, non-finite, above Hw) and a downstream face that drops going up from the toe are rejected, each with a distinct error code. | Boundary tests; H2 = 0 equals the no-tailwater result (checked in U2, TW-03). |
 
 ## 5. Non-functional requirements
 | ID | Pri | Category | Requirement | Verification |
