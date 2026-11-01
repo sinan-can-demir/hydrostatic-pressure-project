@@ -26,6 +26,8 @@ Status: design complete, implementation in progress. See `roadmap.md`.
     cmake -S . -B build && cmake --build build
     ctest --test-dir build --output-on-failure
 
+Or use the `Makefile`, a thin wrapper over the CMake presets (`make help` lists the targets: `build`, `test`, `clang`, `asan`, `coverage`, `lint`, `format`, `trace`, `clean`).
+
 ## Code style and static analysis
 
 `.clang-format` (derived from the existing code) and `.clang-tidy` are committed (NFR-11). Both are checked by the advisory `format-tidy` CI job, which runs `scripts/lint.sh`; it does not block merges yet.
@@ -35,3 +37,7 @@ Status: design complete, implementation in progress. See `roadmap.md`.
     clang-format -i $(git ls-files '*.cpp' '*.hpp')   # apply formatting
 
 CI (`.github/workflows/ci.yml`, design in `docs/08-ci-pipeline.md`) builds with GCC 14 and Clang 19, runs the sanitizers, the core without the JSON layer and the traceability script on every push to `main` and every pull request.
+
+## License
+
+MIT; see `LICENSE`. Copyright (c) 2026 Sinan Demir.
