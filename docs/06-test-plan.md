@@ -130,7 +130,7 @@ Per ADR-0007 and NFR-01: reference comparisons use relative error 1e-9 (absolute
 | NFR-02 | U-01, U-02, CF-01 |
 | NFR-03 | A-02, I-04, N-01, N-02 |
 | NFR-04 | A-01, V-01 |
-| NFR-05 | build and full suite on GCC and Clang (`cmake --preset clang`); no CI yet |
+| NFR-05 | build and full suite on GCC 14 and Clang 19 in CI (`.github/workflows/ci.yml`, docs/08); locally also `cmake --preset clang` |
 | NFR-06 | N-04 |
 | NFR-07 | this matrix; `scripts/traceability.py` checks that every M requirement ID appears in at least one test |
 | NFR-08 | N-03 (`hp_bench_analyze`, advisory; run in a Release build) |

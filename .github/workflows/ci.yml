@@ -1,0 +1,119 @@
+# Continuous integration (docs/08-ci-pipeline.md). Every job runs a command that already exists
+# locally; the presets in CMakePresets.json are the single source of truth for how to build.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Read-only token: no job needs to write to the repository.
+permissions:
+  contents: read
+
+# A newer push to the same branch makes an older, still-running run pointless.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CTEST_OUTPUT_ON_FAILURE: "1"
+
+jobs:
+  # Blocking: build and run all tests with warnings as errors (NFR-05).
+  build-test:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: gcc,        preset: default,    compiler: g++-14 }
+          - { name: clang,      preset: clang,      compiler: clang++-19 }
+          - { name: sanitizers, preset: asan-ubsan, compiler: g++-14 }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install compilers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends g++-14 clang-19
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/hp-deps
+          key: deps-${{ matrix.name }}-${{ hashFiles('CMakeLists.txt') }}
+      - name: Configure
+        run: >
+          cmake --preset ${{ matrix.preset }}
+          -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
+          -DFETCHCONTENT_BASE_DIR=$HOME/hp-deps
+      - name: Build
+        run: cmake --build --preset ${{ matrix.preset }} -j"$(nproc)"
+      - name: Test
+        run: ctest --preset ${{ matrix.preset }} -j"$(nproc)"
+
+  # Blocking: the core must build and pass its tests without the JSON layer (N-04).
+  core-without-io:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends g++-14
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/hp-deps
+          key: deps-core-${{ hashFiles('CMakeLists.txt') }}
+      - name: Configure, build, test
+        run: |
+          cmake --preset default -B build-core -DHP_BUILD_IO=OFF \
+            -DCMAKE_CXX_COMPILER=g++-14 -DFETCHCONTENT_BASE_DIR=$HOME/hp-deps
+          cmake --build build-core -j"$(nproc)"
+          ctest --test-dir build-core -j"$(nproc)"
+
+  # Blocking: every Must requirement is named in a test (NFR-07). Needs only Python.
+  traceability:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: python3 scripts/traceability.py
+
+  # Advisory: timing on a shared runner is noisy, so this never fails a build (NFR-08).
+  release-bench:
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends g++-14
+      - name: Build and run the benchmark
+        run: |
+          cmake --preset default -B build-release -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_COMPILER=g++-14
+          cmake --build build-release -j"$(nproc)" --target hp_bench_analyze
+          ctest --test-dir build-release -L advisory -V
+
+  # Advisory: line coverage report, uploaded as an artifact (not a merge gate in v1).
+  coverage:
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends g++-14
+          # scripts/coverage.py calls plain `gcov`; make it match the g++-14 that built the objects.
+          sudo ln -sf /usr/bin/gcov-14 /usr/local/bin/gcov
+      - name: Build, test, report
+        run: |
+          cmake --preset coverage -DCMAKE_CXX_COMPILER=g++-14
+          cmake --build --preset coverage -j"$(nproc)"
+          ctest --preset coverage -j"$(nproc)"
+          python3 scripts/coverage.py build-coverage | tee coverage.txt
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage
+          path: coverage.txt

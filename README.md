@@ -25,3 +25,5 @@ Status: design complete, implementation in progress. See `roadmap.md`.
 
     cmake -S . -B build && cmake --build build
     ctest --test-dir build --output-on-failure
+
+CI (`.github/workflows/ci.yml`, design in `docs/08-ci-pipeline.md`) builds with GCC 14 and Clang 19, runs the sanitizers, the core without the JSON layer and the traceability script on every push to `main` and every pull request.
