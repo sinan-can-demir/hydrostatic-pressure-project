@@ -28,9 +28,10 @@ Status: design complete, implementation in progress. See `roadmap.md`.
 
 ## Code style and static analysis
 
-`.clang-format` (derived from the existing code) and `.clang-tidy` are committed (NFR-11). Both are advisory: CI does not enforce them yet.
+`.clang-format` (derived from the existing code) and `.clang-tidy` are committed (NFR-11). Both are checked by the advisory `format-tidy` CI job, which runs `scripts/lint.sh`; it does not block merges yet.
 
-    clang-format -i $(git ls-files '*.cpp' '*.hpp')               # format
-    cmake -S . -B build && run-clang-tidy -p build 'computation/.*\.cpp|io/.*\.cpp|apps/.*\.cpp'
+    scripts/lint.sh            # check formatting and run clang-tidy (same as CI)
+    scripts/lint.sh format     # only formatting
+    clang-format -i $(git ls-files '*.cpp' '*.hpp')   # apply formatting
 
 CI (`.github/workflows/ci.yml`, design in `docs/08-ci-pipeline.md`) builds with GCC 14 and Clang 19, runs the sanitizers, the core without the JSON layer and the traceability script on every push to `main` and every pull request.

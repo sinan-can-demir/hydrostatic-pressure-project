@@ -117,3 +117,26 @@ jobs:
         with:
           name: coverage
           path: coverage.txt
+
+  # Advisory: formatting and static analysis (NFR-11). Same command as locally. Runs the -19
+  # tools, which can differ from newer local versions, so it never fails a build yet.
+  format-tidy:
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends clang-19 clang-format-19 clang-tidy-19
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/hp-deps
+          key: deps-lint-${{ hashFiles('CMakeLists.txt') }}
+      - name: Check formatting and run clang-tidy
+        env:
+          CLANG_FORMAT: clang-format-19
+          CLANG_TIDY: clang-tidy-19
+          CXX: clang++-19
+          CMAKE_ARGS: -DFETCHCONTENT_BASE_DIR=/home/runner/hp-deps
+        run: scripts/lint.sh

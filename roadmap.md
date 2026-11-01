@@ -27,7 +27,7 @@ Process: each design phase is a gate (documents in `docs/`); implementation is t
 ## Later (not scheduled)
 - v1.1 (scoped, deferred by owner decision 2026-11-01): tailwater and uplift (tier A; cracked-base iteration is a later tier B). Requirements, source rules, hand-calculated cases AU-1 to AU-3 and slice plan U1-U5 are in `docs/09-uplift-tailwater-requirements.md`; its gate decisions are still to be taken before implementation.
 - v1.x: cohesion in sliding (split from uplift, own increment).
-- Enforce formatting and tidy in CI (advisory job first). The configuration is done (NFR-11) and the non-test tidy baseline is clean; the three remaining findings are in `tests/io/test_json.cpp` (Catch2 `REQUIRE` is not understood by the optional-access check).
+- Make the advisory `format-tidy` CI job blocking once it has been green for a few runs and the clang-format 19 vs 22 difference is settled. The three remaining tidy findings are in `tests/io/test_json.cpp` (tests are not linted).
 - Visualization front end (`hp_viz`) consuming `Result`.
 - Retaining walls, channel and basement walls; sediment and ice loads.
 - Efficient binary storage next to JSON.
