@@ -9,7 +9,7 @@ Today every quality claim in `roadmap.md` (163 tests on GCC, Clang and the sanit
 
 ## 2. Scope
 In scope: GitHub Actions workflow on Linux x86-64, triggered by push to `main` and by pull requests; the jobs in section 3; dependency caching; how failures are reported.
-Out of scope: Windows and macOS builds (NFR-05 says Linux), releases and packaging, deployment, formatting and lint as blocking gates (the `format-tidy` job is advisory), automatic dependency updates.
+Out of scope: Windows and macOS builds (NFR-05 says Linux), releases and packaging, deployment, formatting and lint as blocking gates beyond `format-tidy` (for example lint of tests), automatic dependency updates.
 
 ## 3. Jobs
 All jobs configure with the existing presets, so CI and a developer run the same commands.
@@ -22,14 +22,14 @@ All jobs configure with the existing presets, so CI and a developer run the same
 | `traceability` | `python3 scripts/traceability.py` | every Must requirement is named in a test (NFR-07) | yes |
 | `release-bench` | Release build, `ctest -L advisory` | analysis of 1000 vertices stays near its budget (NFR-08) | no (advisory) |
 | `coverage` | preset `coverage`, `scripts/coverage.py` | line coverage report, uploaded as an artifact | no (advisory) |
-| `format-tidy` | `scripts/lint.sh` (clang-format dry run and clang-tidy, version 19) | formatting and static analysis stay clean on non-test sources (NFR-11) | no (advisory) |
+| `format-tidy` | `scripts/lint.sh` (clang-format dry run and clang-tidy, version 19) | formatting and static analysis stay clean on non-test sources (NFR-11) | yes |
 | `core-without-io` | `-DHP_BUILD_IO=OFF` build and test | the core builds without the JSON library (N-04) | yes |
 
 Notes:
 - `traceability` needs only Python, so it runs in seconds and gives the fastest feedback.
 - The negative build tests (`build_graph_NFR-06_*`) run inside `gcc` and `clang` as ordinary CTest tests.
 - `release-bench` reports the timing in the job log. A slow shared runner must never fail a build, so timing is never a gate (as in the test plan).
-- `format-tidy` uses the committed `.clang-format` and `.clang-tidy` through `scripts/lint.sh`, which also runs locally. It is advisory because the configuration was written with a newer clang-format than CI's 19; promote it to blocking after it has been green for a few runs, or after the version difference is shown to be harmless.
+- `format-tidy` uses the committed `.clang-format` and `.clang-tidy` through `scripts/lint.sh` (also `make lint`). It was advisory first, because the style was written with clang-format 22 and CI runs 19. It passed with 19 on every run since it was added and the code is also clean under 22, so it is now blocking. Tests are not linted.
 - `coverage` publishes the report; it does not fail below 90 percent in v1, matching "advisory, not a merge gate" in `coverage.py`.
 
 ## 4. Toolchains
@@ -60,13 +60,13 @@ Catch2 v3.9.1 and nlohmann/json v3.12.0 are downloaded by `FetchContent` at conf
 | Older compilers than local (GCC 14, Clang 19 vs 16 and 22) reject or warn on code that local builds accept; warnings are errors | first CI run is red | expected; fix the code in the first run, not the workflow; this is the reason for NFR-05 |
 | Clang 19 and Catch2's `__COUNTER__` use | the local Clang flag `-Wno-c2y-extensions` may not exist in older Clang | check the first run; guard the flag with a compiler-support check if needed |
 | `FetchContent` network failure | spurious red build | the cache; a rerun |
-| clang-format 19 on CI formats differently from the 22 used to write the style | advisory job reports noise | advisory first; align the style or pin the version before making it blocking |
+| clang-format 19 on CI formats differently from the 22 used to write the style | a local-clean change fails CI | verified identical on the current code; if a future version diverges, pin the style or the tool version |
 | Release timing on shared runners | noisy benchmark | advisory only |
 | The benchmark and sanitizers add minutes | slower feedback | all jobs run in parallel |
 | Third-party GitHub Actions can change | supply-chain exposure | use only `actions/checkout`, `actions/cache` and `actions/upload-artifact`, pinned to a commit SHA, with read-only repository permissions |
 
 ## 8. Decisions (approved as recommended)
-1. **Which jobs block a merge.** Approved: `gcc`, `clang`, `sanitizers`, `traceability`, `core-without-io` block; `release-bench` and `coverage` are advisory.
+1. **Which jobs block a merge.** Approved: `gcc`, `clang`, `sanitizers`, `traceability`, `core-without-io` block; `release-bench` and `coverage` are advisory. Amended after the NFR-11 increment: `format-tidy` also blocks.
 2. **Compiler versions.** Approved: GCC 14 and Clang 19 or newer, on pinned `ubuntu-24.04`.
 3. **Triggers.** Approved: every push to `main` and every pull request; no scheduled runs.
 4. **Actions pinned to commit SHAs** (approved) versus version tags such as `@v4` (easier to read, less safe).

@@ -118,11 +118,10 @@ jobs:
           name: coverage
           path: coverage.txt
 
-  # Advisory: formatting and static analysis (NFR-11). Same command as locally. Runs the -19
-  # tools, which can differ from newer local versions, so it never fails a build yet.
+  # Blocking: formatting and static analysis on non-test sources (NFR-11). Same command as
+  # locally (`make lint`). Runs the -19 tools; the code was verified clean with both 19 and 22.
   format-tidy:
     runs-on: ubuntu-24.04
-    continue-on-error: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install tools

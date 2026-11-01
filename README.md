@@ -30,7 +30,7 @@ Or use the `Makefile`, a thin wrapper over the CMake presets (`make help` lists 
 
 ## Code style and static analysis
 
-`.clang-format` (derived from the existing code) and `.clang-tidy` are committed (NFR-11). Both are checked by the advisory `format-tidy` CI job, which runs `scripts/lint.sh`; it does not block merges yet.
+`.clang-format` (derived from the existing code) and `.clang-tidy` are committed (NFR-11). Both are checked by the `format-tidy` CI job, which runs `scripts/lint.sh` and blocks merges, so run `make lint` before pushing.
 
     scripts/lint.sh            # check formatting and run clang-tidy (same as CI)
     scripts/lint.sh format     # only formatting
