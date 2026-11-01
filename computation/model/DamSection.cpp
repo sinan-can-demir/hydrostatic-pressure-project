@@ -83,7 +83,7 @@ std::vector<math::Point2> DamSection::upstream_face() const {
         i = (i + 1) % vertices.size();
         face.push_back(vertices[i]);
     }
-    std::reverse(face.begin(), face.end());
+    std::ranges::reverse(face);
     return face;
 }
 

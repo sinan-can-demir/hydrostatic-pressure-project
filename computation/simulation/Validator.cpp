@@ -140,7 +140,7 @@ void validate_water_level(const model::Scenario& s, Errors& errors) {
     }
 
     const auto& v = s.section.vertices;
-    const bool usable = !v.empty() && std::all_of(v.begin(), v.end(), [](const math::Point2& p) {
+    const bool usable = !v.empty() && std::ranges::all_of(v, [](const math::Point2& p) {
         return std::isfinite(p.x.meters) && std::isfinite(p.y.meters);
     });
     if (!usable) return;

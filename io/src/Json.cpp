@@ -1,5 +1,6 @@
 #include "io/Json.hpp"
 
+#include <array>
 #include <cmath>
 #include <initializer_list>
 #include <limits>
@@ -40,7 +41,7 @@ public:
                         std::initializer_list<std::string_view> allowed) {
         for (const auto& item : obj.items()) {
             bool known = false;
-            for (std::string_view name : allowed) known = known || item.key() == name;
+            for (const std::string_view name : allowed) known = known || item.key() == name;
             if (!known) add(IoErrorCode::UnknownField, join(path, item.key()), "unknown field");
         }
     }
@@ -81,7 +82,8 @@ template <typename E> struct Name {
 };
 
 template <typename E, std::size_t N>
-void read_enum(Reader& r, const json& value, const std::string& path, const Name<E> (&names)[N], E& target) {
+void read_enum(Reader& r, const json& value, const std::string& path, const std::array<Name<E>, N>& names,
+               E& target) {
     const auto text = r.string(value, path);
     if (!text) return;
     for (const auto& n : names) {
@@ -95,12 +97,14 @@ void read_enum(Reader& r, const json& value, const std::string& path, const Name
     r.add(IoErrorCode::InvalidValue, path, "unknown value \"" + *text + "\"; expected one of: " + choices);
 }
 
-constexpr Name<model::LoadCondition> kConditions[] = {{"usual", model::LoadCondition::Usual},
-                                                      {"unusual", model::LoadCondition::Unusual},
-                                                      {"extreme", model::LoadCondition::Extreme}};
-constexpr Name<model::ResultantZone> kZones[] = {{"middle_third", model::ResultantZone::MiddleThird},
-                                                 {"middle_half", model::ResultantZone::MiddleHalf},
-                                                 {"within_base", model::ResultantZone::WithinBase}};
+constexpr std::array<Name<model::LoadCondition>, 3> kConditions = {
+    {{"usual", model::LoadCondition::Usual},
+     {"unusual", model::LoadCondition::Unusual},
+     {"extreme", model::LoadCondition::Extreme}}};
+constexpr std::array<Name<model::ResultantZone>, 3> kZones = {
+    {{"middle_third", model::ResultantZone::MiddleThird},
+     {"middle_half", model::ResultantZone::MiddleHalf},
+     {"within_base", model::ResultantZone::WithinBase}}};
 
 void read_row(Reader& r, const json& value, const std::string& path, model::CriteriaRow& row) {
     if (!r.object(value, path)) return;

@@ -51,7 +51,7 @@ Resultant make_resultant(const std::vector<ForceContribution>& contributions,
 
 Contact make_contact(const Resultant& resultant) {
     const Contact none{ContactState::None, units::Length(0.0), units::Pressure(0.0), units::Pressure(0.0)};
-    if (!resultant.x_from_toe) return none;
+    if (!resultant.x_from_toe || !resultant.eccentricity) return none;
 
     const double base = resultant.base_length.meters;
     const double x = resultant.x_from_toe->meters;
