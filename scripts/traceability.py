@@ -16,7 +16,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 # Must requirements that no test tag can express, with how they are verified instead.
 VERIFIED_ELSEWHERE = {
-    "NFR-05": "builds and passes on GCC and Clang (cmake --preset clang), warnings as errors",
+    "NFR-05": "builds and passes on GCC and Clang in CI (.github/workflows/ci.yml), warnings as errors",
     "NFR-07": "this script",
 }
 
