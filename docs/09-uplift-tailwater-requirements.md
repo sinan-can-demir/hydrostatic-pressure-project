@@ -1,6 +1,6 @@
 # 09 Requirements increment: tailwater and uplift (v1.1)
 
-Status: SCOPED AND DEFERRED (owner decision, 2026-11-01). This is a scoped future increment, not scheduled. Section 9 decisions are not yet taken; the recommendations stand as proposals until the increment is picked up and gated.
+Status: ACCEPTED, in implementation (picked up 2026-11-01; it had been scoped and deferred earlier the same day). The owner delegated the decisions on pick-up, so D-U1 to D-U7 stand as recommended (section 9). Requirements enter `02-requirements.md` slice by slice, when the tests that cover them land, because `scripts/traceability.py` fails on any Must requirement without a test.
 Inputs: `01-vision-stakeholders.md` (D3, D4), `02-requirements.md` (FR-15, FR-21, CON-04, CON-05, R3), `04-domain-model.md`, ADR-0004.
 Source: USACE EM 1110-2-2200 (30 Jun 1995), paragraphs 3-3.c(3) (tailwater), 3-3.d(1) (uplift along the base) and Figures 3-1 to 3-5. The text and the figure formulas were read directly from the document (same third-party copy as decision R3; the same re-verification caveat applies).
 Numbering continues `02-requirements.md`: new requirements start at FR-22 and NFR-12.
@@ -82,10 +82,15 @@ Common data: rectangle B = 5 m, H = 10 m, vertical faces, Hw = H1 = 10 m, rho = 
 **AU-3: drains, no tailwater.** E = 0.5 (K = 0.5), X = 1 m, H4 = 0, H2 = 0.
 - H3 = K (H1 - H') (L - X) / L + H' = 0.5 * 10 * 4/5 = 4 m. Diagram: heel 10 m, drain 4 m, toe 0 m.
 - Head-areas: heel to drain (10 + 4)/2 * 1 = 7; drain to toe 4/2 * 4 = 8; total 15, so U = 15 * 9810 = 147 150 N/m.
-- Head-moments about the toe: 4 * 1 at 4.5 m = 18; 1/2 * 6 * 1 at 4.6667 m = 14; 8 at 1.3333 m = 10.667; total 42.667, so moment = -418 560.
-- V = 1 027 850. M = 2 937 500 - 1 635 000 - 418 560 = 883 940. x_R = 0.8600 m. Sliding FS = 1.467.
+- Head-moments about the toe: 4 * 1 at 4.5 m = 18; 1/2 * 6 * 1 at 4.6667 m = 14; 8 at 2.6667 m = 21.333; total 53.333, so moment = -523 200.
+- V = 1 027 850. M = 2 937 500 - 1 635 000 - 523 200 = 779 300. x_R = 0.7582 m. Sliding FS = 1.467.
 
-These are first hand calculations and must be re-derived independently (script oracle) at the test-plan gate, as AC-1 was. AU-4 (cracked base) is defined when FR-29 is scheduled.
+**AU-5: drains near the upstream face (Fig. 3-3 rule), no tailwater.** E = 0.5, X = 0.2 m (<= 0.05 H1 = 0.5 m), H4 = 0, H2 = 0.
+- H3 = K (H1 - H') + H' = 5 m at the heel; one straight line to 0 at the toe.
+- U = 1/2 * 5 * 5 * 9810 = 122 625 N/m, centroid 5/3 from the heel = 3.3333 m from the toe, moment = -408 750.
+- V = 1 052 375. M = 2 937 500 - 1 635 000 - 408 750 = 893 750. x_R = 0.8493 m. Sliding FS = 1.502.
+
+All four cases were re-derived with an independent numerical-integration script (midpoint rule, 200 000 steps, no engine formulas). That check found and corrected an error in the first hand calculation of AU-3 (the drain-to-toe centroid), which is why the oracle is required. AU-4 (cracked base) is defined when FR-29 is scheduled.
 
 ## 7. Impact on existing design
 - **ADR-0004 holds.** Add `TailwaterLoad` and `UpliftLoad` (both pure, tier A). Resultant, contact, sliding, overturning report and checks are unchanged (FR-26). A new ADR is needed only for tier B, because uplift would then depend on the contact result.
@@ -106,11 +111,12 @@ These are first hand calculations and must be re-derived independently (script o
 
 Each slice follows the existing process: tests first, exit criteria from `06-test-plan.md` section 9, PR into `main` with CI green.
 
-## 9. Gate decisions (pending: to be taken when the increment is scheduled)
-Please confirm or change (a "your call" is accepted and means the recommendations stand):
+## 9. Gate decisions (taken on pick-up, recommendations adopted)
 1. D-U1 to D-U6 as written in section 3.
-2. D-U7 schema version bump (recommended: yes).
-3. Warning thresholds on E in FR-25 (25 to 50 percent normal, above 67 percent strong warning).
+2. D-U7: schema version bump to 2, accepting 1 and 2 (ADR-0008).
+3. Warning thresholds on E in FR-25: warning outside 25 to 50 percent, stronger warning above 67 percent.
+4. Added AU-5 (Fig. 3-3 near-heel drain rule) to the reference cases after the oracle review.
+5. Test plan section 11 and ADR-0008 accompany this gate; implementation follows slices U1 to U4, tier B (U5) stays deferred.
 
 ## 10. Risks and open items
 - The source is a third-party scan (R3). The formulas for H3 and the E limits were read from the document; confirm against the official publication before any compliance claim.

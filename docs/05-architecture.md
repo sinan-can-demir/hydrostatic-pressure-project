@@ -140,6 +140,7 @@ Optional fields take the documented defaults. Unknown keys are rejected so typos
 | FR-16 | `analyze` / `Analyzer::run` |
 | FR-17, FR-19 | `hp_io`, schema section 6 |
 | FR-21 (future) | `Load` interface, `ForceContribution` list (ADR-0004) |
+| FR-22 to FR-31, NFR-12 (v1.1, planned) | `TailwaterLoad`, `UpliftLoad` as pure loads, schema version 2 (ADR-0008, `docs/09`) |
 | NFR-05 | CMake; toolchain note below |
 
 ## 9. Toolchain note
