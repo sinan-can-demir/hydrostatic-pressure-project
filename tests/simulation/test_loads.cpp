@@ -108,8 +108,7 @@ TEST_CASE("L-03 SelfWeight: W and centroid", "[FR-07][L-03]") {
         CHECK_THAT(all[0].point.y.meters, WithinRel(5.0, 1e-12));
     }
     SECTION("AC-2 triangle: W at B/3 from the heel") {
-        const auto all =
-            simulation::SelfWeight{}.contributions(scenario({P(0, 0), P(7, 0), P(0, 10)}, 10.0));
+        const auto all = simulation::SelfWeight{}.contributions(scenario({P(0, 0), P(7, 0), P(0, 10)}, 10.0));
         CHECK_THAT(all[0].fy.n_per_m, WithinRel(-822500.0, 1e-12));
         CHECK_THAT(all[0].point.x.meters, WithinRel(7.0 / 3.0, 1e-12));
     }

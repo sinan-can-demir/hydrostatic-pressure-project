@@ -153,9 +153,10 @@ TEST_CASE("I-02 unknown keys are rejected at every level", "[FR-17][I-02]") {
               "water_levl_m"));
     CHECK(has(io::parse_scenario(with("fluid", nlohmann::json{{"densty", 1}})).error(),
               io::IoErrorCode::UnknownField, "fluid.densty"));
-    CHECK(has(io::parse_scenario(with("dam", nlohmann::json{{"vertices_m", nlohmann::json::array()},
-                                                            {"extra", 1}})).error(),
-              io::IoErrorCode::UnknownField, "dam.extra"));
+    CHECK(has(
+        io::parse_scenario(with("dam", nlohmann::json{{"vertices_m", nlohmann::json::array()}, {"extra", 1}}))
+            .error(),
+        io::IoErrorCode::UnknownField, "dam.extra"));
     CHECK(has(io::parse_scenario(with("criteria", nlohmann::json{{"usual", {{"zon", "x"}}}})).error(),
               io::IoErrorCode::UnknownField, "criteria.usual.zon"));
 }
@@ -168,8 +169,9 @@ TEST_CASE("I-02 wrong types are rejected with the offending path", "[FR-17][I-02
               io::IoErrorCode::WrongType, "dam.vertices_m"));
     CHECK(has(io::parse_scenario(with("dam", nlohmann::json{{"vertices_m", {{0, 0}, {5}, {5, 10}}}})).error(),
               io::IoErrorCode::WrongType, "dam.vertices_m[1]"));
-    CHECK(has(io::parse_scenario(with("dam", nlohmann::json{{"vertices_m", {{0, 0}, {"a", 0}, {5, 10}}}})).error(),
-              io::IoErrorCode::WrongType, "dam.vertices_m[1][0]"));
+    CHECK(has(
+        io::parse_scenario(with("dam", nlohmann::json{{"vertices_m", {{0, 0}, {"a", 0}, {5, 10}}}})).error(),
+        io::IoErrorCode::WrongType, "dam.vertices_m[1][0]"));
     CHECK(has(io::parse_scenario(with("pressure_samples", 2.5)).error(), io::IoErrorCode::WrongType,
               "pressure_samples"));
     CHECK(has(io::parse_scenario(with("pressure_samples", -3)).error(), io::IoErrorCode::WrongType,
@@ -181,8 +183,9 @@ TEST_CASE("I-02 unknown enumeration values are rejected", "[FR-13][I-02]") {
               "load_condition"));
     CHECK(has(io::parse_scenario(with("criteria", nlohmann::json{{"preset", "eurocode"}})).error(),
               io::IoErrorCode::InvalidValue, "criteria.preset"));
-    CHECK(has(io::parse_scenario(with("criteria", nlohmann::json{{"usual", {{"zone", "middle_fifth"}}}})).error(),
-              io::IoErrorCode::InvalidValue, "criteria.usual.zone"));
+    CHECK(has(
+        io::parse_scenario(with("criteria", nlohmann::json{{"usual", {{"zone", "middle_fifth"}}}})).error(),
+        io::IoErrorCode::InvalidValue, "criteria.usual.zone"));
 }
 
 TEST_CASE("I-02 all problems are reported together", "[FR-17][I-02]") {
@@ -190,7 +193,7 @@ TEST_CASE("I-02 all problems are reported together", "[FR-17][I-02]") {
         "schema_version": 1, "dam": 3, "water_level_m": "x", "typo": 1
     })");
     REQUIRE_FALSE(r.has_value());
-    CHECK(r.error().size() >= 4);  // dam type, water type, missing friction, unknown key
+    CHECK(r.error().size() >= 4); // dam type, water type, missing friction, unknown key
 }
 
 // ---- I-03 golden file, I-04 echo ---------------------------------------------------------

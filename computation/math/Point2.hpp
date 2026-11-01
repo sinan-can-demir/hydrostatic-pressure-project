@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "units/Length.hpp"
 #include "Vector2.hpp"
+#include "units/Length.hpp"
 
 namespace math {
 

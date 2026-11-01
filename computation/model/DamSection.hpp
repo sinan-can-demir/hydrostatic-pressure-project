@@ -24,8 +24,8 @@ struct DamSection {
     // Indices of the vertices lying on the base line y = 0 (within the geometric tolerance).
     std::vector<std::size_t> base_vertex_indices() const;
 
-    math::Point2 heel() const;  // upstream base corner
-    math::Point2 toe() const;   // downstream base corner
+    math::Point2 heel() const; // upstream base corner
+    math::Point2 toe() const;  // downstream base corner
     units::Length base_length() const;
     units::Length crest_height() const;
     units::Area area() const;

@@ -78,7 +78,8 @@ int run(const std::vector<std::string>& args, std::istream& in, std::ostream& ou
     const auto result = simulation::analyze(*scenario);
     if (!result) {
         for (const simulation::ValidationError& e : result.error()) {
-            err << "error: " << simulation::to_string(e.code) << " at " << e.path << ": " << e.message << "\n";
+            err << "error: " << simulation::to_string(e.code) << " at " << e.path << ": " << e.message
+                << "\n";
         }
         return kInvalidInput;
     }

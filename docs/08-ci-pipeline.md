@@ -9,7 +9,7 @@ Today every quality claim in `roadmap.md` (163 tests on GCC, Clang and the sanit
 
 ## 2. Scope
 In scope: GitHub Actions workflow on Linux x86-64, triggered by push to `main` and by pull requests; the jobs in section 3; dependency caching; how failures are reported.
-Out of scope: Windows and macOS builds (NFR-05 says Linux), releases and packaging, deployment, formatting and lint gates (NFR-11 is not done), automatic dependency updates.
+Out of scope: Windows and macOS builds (NFR-05 says Linux), releases and packaging, deployment, formatting and lint gates (the `.clang-format` and `.clang-tidy` files exist since NFR-11, but CI does not enforce them), automatic dependency updates.
 
 ## 3. Jobs
 All jobs configure with the existing presets, so CI and a developer run the same commands.

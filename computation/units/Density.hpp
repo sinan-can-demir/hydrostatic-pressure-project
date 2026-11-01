@@ -1,15 +1,13 @@
 /**
  * @file Density.hpp
  * @author Sinan Demir
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2026-01-06
- * 
+ *
  * @copyright Copyright (c) 2026
- * 
+ *
  */
-
-
 
 #pragma once
 

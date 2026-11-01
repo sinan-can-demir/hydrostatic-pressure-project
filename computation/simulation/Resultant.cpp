@@ -35,8 +35,12 @@ Resultant make_resultant(const std::vector<ForceContribution>& contributions,
     }
 
     const double v = -sum_fy;
-    Resultant r{units::ForcePerWidth(v), units::ForcePerWidth(sum_fx), units::MomentPerWidth(moment),
-                std::nullopt, std::nullopt, units::Length(base)};
+    Resultant r{units::ForcePerWidth(v),
+                units::ForcePerWidth(sum_fx),
+                units::MomentPerWidth(moment),
+                std::nullopt,
+                std::nullopt,
+                units::Length(base)};
     if (v > 0.0) {
         const double x = moment / v;
         r.x_from_toe = units::Length(x);
@@ -46,8 +50,7 @@ Resultant make_resultant(const std::vector<ForceContribution>& contributions,
 }
 
 Contact make_contact(const Resultant& resultant) {
-    const Contact none{ContactState::None, units::Length(0.0), units::Pressure(0.0),
-                       units::Pressure(0.0)};
+    const Contact none{ContactState::None, units::Length(0.0), units::Pressure(0.0), units::Pressure(0.0)};
     if (!resultant.x_from_toe) return none;
 
     const double base = resultant.base_length.meters;
@@ -63,12 +66,10 @@ Contact make_contact(const Resultant& resultant) {
     }
     if (x < base / 3.0) {
         const double a = 3.0 * x;
-        return {ContactState::Partial, units::Length(a), units::Pressure(2.0 * v / a),
-                units::Pressure(0.0)};
+        return {ContactState::Partial, units::Length(a), units::Pressure(2.0 * v / a), units::Pressure(0.0)};
     }
     const double a = 3.0 * (base - x);
-    return {ContactState::Partial, units::Length(a), units::Pressure(0.0),
-            units::Pressure(2.0 * v / a)};
+    return {ContactState::Partial, units::Length(a), units::Pressure(0.0), units::Pressure(2.0 * v / a)};
 }
 
 SlidingResult make_sliding(const Resultant& resultant, units::Angle friction_angle) {
@@ -93,13 +94,11 @@ OverturningReport make_overturning(const std::vector<ForceContribution>& contrib
     for (const ForceContribution& c : contributions) {
         if (c.fx.n_per_m != 0.0) {
             const double y = c.point.y.meters;
-            add(c, ForceDirection::Horizontal, c.fx.n_per_m, std::abs(y),
-                horizontal_moment(c.fx.n_per_m, y));
+            add(c, ForceDirection::Horizontal, c.fx.n_per_m, std::abs(y), horizontal_moment(c.fx.n_per_m, y));
         }
         if (c.fy.n_per_m != 0.0) {
             const double dx = c.point.x.meters - toe_x;
-            add(c, ForceDirection::Vertical, c.fy.n_per_m, std::abs(dx),
-                vertical_moment(c.fy.n_per_m, dx));
+            add(c, ForceDirection::Vertical, c.fy.n_per_m, std::abs(dx), vertical_moment(c.fy.n_per_m, dx));
         }
     }
     report.resisting = units::MomentPerWidth(resisting);

@@ -29,8 +29,8 @@ namespace simulation {
 struct Resultant {
     bool operator==(const Resultant&) const = default;
 
-    units::ForcePerWidth vertical;    // V, downward positive
-    units::ForcePerWidth horizontal;  // H, downstream positive
+    units::ForcePerWidth vertical;   // V, downward positive
+    units::ForcePerWidth horizontal; // H, downstream positive
     units::MomentPerWidth moment_about_toe;
     // Empty when the net vertical load is not downward (V <= 0): no location exists.
     std::optional<units::Length> x_from_toe;
@@ -85,9 +85,9 @@ struct OverturningReport {
     bool operator==(const OverturningReport&) const = default;
 
     std::vector<OverturningTerm> terms;
-    units::MomentPerWidth resisting;    // sum of resisting moments (>= 0)
-    units::MomentPerWidth overturning;  // magnitude of the sum of overturning moments (>= 0)
-    std::optional<double> ratio;        // resisting / overturning; empty = unbounded
+    units::MomentPerWidth resisting;   // sum of resisting moments (>= 0)
+    units::MomentPerWidth overturning; // magnitude of the sum of overturning moments (>= 0)
+    std::optional<double> ratio;       // resisting / overturning; empty = unbounded
 };
 
 OverturningReport make_overturning(const std::vector<ForceContribution>& contributions,

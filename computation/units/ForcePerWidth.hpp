@@ -34,8 +34,6 @@ constexpr MomentPerWidth operator*(ForcePerWidth f, Length arm) {
 constexpr MomentPerWidth operator*(Length arm, ForcePerWidth f) { return f * arm; }
 
 // Moment divided by force gives the lever arm (e.g. resultant location, x_R = M / V).
-constexpr Length operator/(MomentPerWidth m, ForcePerWidth f) {
-    return Length(m.n_m_per_m / f.n_per_m);
-}
+constexpr Length operator/(MomentPerWidth m, ForcePerWidth f) { return Length(m.n_m_per_m / f.n_per_m); }
 
 } // namespace units

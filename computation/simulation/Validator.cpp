@@ -84,7 +84,8 @@ void validate_section(const model::DamSection& section, Errors& errors) {
     const std::vector<std::size_t> base = section.base_vertex_indices();
     if (base.size() > 2) {
         add(errors, ErrorCode::MultipleBaseEdges, path,
-            std::format("{} vertices lie on y = 0; the section must have exactly one base edge", base.size()));
+            std::format("{} vertices lie on y = 0; the section must have exactly one base edge",
+                        base.size()));
     } else if (base.size() < 2 || (base[1] - base[0] != 1 && !(base[0] == 0 && base[1] == n - 1))) {
         add(errors, ErrorCode::NoBaseEdge, path,
             "the section needs one horizontal base edge on y = 0 joining two consecutive vertices");
@@ -133,7 +134,8 @@ void validate_water_level(const model::Scenario& s, Errors& errors) {
         return;
     }
     if (level < 0.0) {
-        add(errors, ErrorCode::WaterLevelNegative, path, "the water level must not be below the base (y = 0)");
+        add(errors, ErrorCode::WaterLevelNegative, path,
+            "the water level must not be below the base (y = 0)");
         return;
     }
 
@@ -173,8 +175,8 @@ void validate_parameters(const model::Scenario& s, Errors& errors) {
 
     validate_positive(errors, s.fluid.density.kg_per_m3, "fluid.density_kg_m3",
                       ErrorCode::NonPositiveFluidDensity, "the fluid density");
-    validate_positive(errors, s.fluid.gravity.m_per_s2, "fluid.gravity_m_s2",
-                      ErrorCode::NonPositiveGravity, "the gravitational acceleration");
+    validate_positive(errors, s.fluid.gravity.m_per_s2, "fluid.gravity_m_s2", ErrorCode::NonPositiveGravity,
+                      "the gravitational acceleration");
     validate_positive(errors, s.concrete.unit_weight.n_per_m3, "concrete.unit_weight_n_m3",
                       ErrorCode::NonPositiveUnitWeight, "the concrete unit weight");
 

@@ -79,8 +79,7 @@ TEST_CASE("moment per width arithmetic", "[NFR-02][U-01]") {
 
 TEST_CASE("moment per width divided by force per width is a length", "[NFR-02][U-01]") {
     static_assert(std::is_same_v<decltype(MomentPerWidth(1.0) / ForcePerWidth(1.0)), Length>);
-    CHECK((MomentPerWidth(1302500.0) / ForcePerWidth(1175000.0)).meters ==
-          1302500.0 / 1175000.0);
+    CHECK((MomentPerWidth(1302500.0) / ForcePerWidth(1175000.0)).meters == 1302500.0 / 1175000.0);
 }
 
 TEST_CASE("angle conversions", "[NFR-02][U-01]") {

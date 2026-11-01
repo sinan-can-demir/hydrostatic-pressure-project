@@ -1,0 +1,12 @@
+# Formatting style for the whole repository (NFR-11).
+# Derived from the existing code: 4-space indent, attached braces, left-aligned
+# pointers/references, short single-line ifs, 110 columns.
+BasedOnStyle: LLVM
+IndentWidth: 4
+ColumnLimit: 110
+PointerAlignment: Left
+AccessModifierOffset: -4
+SpacesBeforeTrailingComments: 1
+AllowShortIfStatementsOnASingleLine: WithoutElse
+AllowShortLoopsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: All

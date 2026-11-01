@@ -49,7 +49,8 @@ Scenario random_scenario(Random& rng) {
     const double crest_upstream = rng.unit() < 0.4 ? 0.0 : rng.in(0.0, 0.4) * base;
     const double crest_downstream = crest_upstream + rng.in(0.05, 0.5) * base;
 
-    std::vector<Point2> v{P(0, 0), P(base, 0), P(std::min(crest_downstream, base), height), P(crest_upstream, height)};
+    std::vector<Point2> v{P(0, 0), P(base, 0), P(std::min(crest_downstream, base), height),
+                          P(crest_upstream, height)};
     if (rng.unit() < 0.5) {
         const double yk = rng.in(0.2, 0.8) * height;
         v.push_back(P(rng.in(0.0, crest_upstream), yk));
@@ -60,7 +61,8 @@ Scenario random_scenario(Random& rng) {
     return Scenario{.section = model::DamSection{v},
                     .water_level = model::WaterLevel{Length(hw)},
                     .foundation = model::Foundation{Angle::from_degrees(rng.in(10.0, 60.0))},
-                    .condition = rng.unit() < 0.5 ? model::LoadCondition::Usual : model::LoadCondition::Extreme};
+                    .condition =
+                        rng.unit() < 0.5 ? model::LoadCondition::Usual : model::LoadCondition::Extreme};
 }
 
 double shoelace_area(const std::vector<Point2>& v) {
@@ -136,7 +138,8 @@ TEST_CASE("P-05 random valid sections satisfy the independent oracles", "[FR-08]
 
         double fx_water = 0.0, fy_water = 0.0, fy_weight = 0.0;
         for (const ForceContribution& c : r->contributions) {
-            if (c.source == "self weight") fy_weight += c.fy.n_per_m;
+            if (c.source == "self weight")
+                fy_weight += c.fy.n_per_m;
             else {
                 fx_water += c.fx.n_per_m;
                 fy_water += c.fy.n_per_m;
@@ -155,7 +158,8 @@ TEST_CASE("P-05 random valid sections satisfy the independent oracles", "[FR-08]
             CHECK_THAT(c.point.x.meters,
                        WithinAbs(x0 + wedge_centroid_offset(s), 1e-9 * (1.0 + std::abs(x0) + base_of(s))));
         }
-        CHECK_THAT(fy_weight, WithinRel(-s.concrete.unit_weight.n_per_m3 * shoelace_area(s.section.vertices), 1e-9));
+        CHECK_THAT(fy_weight,
+                   WithinRel(-s.concrete.unit_weight.n_per_m3 * shoelace_area(s.section.vertices), 1e-9));
 
         // Reported V, H, M against a fresh sum over the contributions.
         const double toe_x = s.section.toe().x.meters;
@@ -199,7 +203,7 @@ TEST_CASE("P-05 random valid sections satisfy the independent oracles", "[FR-08]
         CHECK_THAT(force, WithinRel(v, 1e-9));
         CHECK_THAT(moment, WithinRel(v * r->resultant.x_from_toe->meters, 1e-9));
     }
-    CHECK(analysed >= 1000);  // the generator must produce enough valid sections to mean something
+    CHECK(analysed >= 1000); // the generator must produce enough valid sections to mean something
 }
 
 TEST_CASE("N-01 a thousand repeated runs are bitwise identical", "[NFR-03][N-01]") {

@@ -26,4 +26,11 @@ Status: design complete, implementation in progress. See `roadmap.md`.
     cmake -S . -B build && cmake --build build
     ctest --test-dir build --output-on-failure
 
+## Code style and static analysis
+
+`.clang-format` (derived from the existing code) and `.clang-tidy` are committed (NFR-11). Both are advisory: CI does not enforce them yet.
+
+    clang-format -i $(git ls-files '*.cpp' '*.hpp')               # format
+    cmake -S . -B build && run-clang-tidy -p build 'computation/.*\.cpp|io/.*\.cpp|apps/.*\.cpp'
+
 CI (`.github/workflows/ci.yml`, design in `docs/08-ci-pipeline.md`) builds with GCC 14 and Clang 19, runs the sanitizers, the core without the JSON layer and the traceability script on every push to `main` and every pull request.

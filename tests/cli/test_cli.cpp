@@ -77,7 +77,7 @@ TEST_CASE("CLI-01 -o writes the result to a file and leaves stdout empty", "[FR-
 }
 
 TEST_CASE("CLI-01 a FAIL verdict is a successful analysis (exit 0)", "[FR-18][CLI-01]") {
-    const Outcome r = run({kAc1});  // AC-1 usual fails its checks
+    const Outcome r = run({kAc1}); // AC-1 usual fails its checks
     CHECK(r.code == 0);
     CHECK(nlohmann::json::parse(r.out)["verdict"] == "fail");
 }

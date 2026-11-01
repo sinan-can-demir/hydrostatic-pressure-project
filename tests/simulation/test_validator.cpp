@@ -95,8 +95,7 @@ TEST_CASE("zero area is rejected", "[FR-02][V-01]") {
 }
 
 TEST_CASE("repeated consecutive vertices are rejected", "[FR-02][V-01]") {
-    const auto errors =
-        simulation::validate(scenario({P(0, 0), P(5, 0), P(5, 0), P(5, 10), P(0, 10)}));
+    const auto errors = simulation::validate(scenario({P(0, 0), P(5, 0), P(5, 0), P(5, 10), P(0, 10)}));
     REQUIRE(has(errors, ErrorCode::DuplicateVertex));
     CHECK(find(errors, ErrorCode::DuplicateVertex)->path == "dam.vertices_m[2]");
 }
@@ -105,8 +104,7 @@ TEST_CASE("a section without a base edge on y = 0 is rejected", "[FR-02][G-05][V
     // Floating above the base.
     CHECK(has(simulation::validate(scenario({P(0, 5), P(5, 5), P(2, 10)})), ErrorCode::NoBaseEdge));
     // Sloped bottom: only one vertex on y = 0.
-    CHECK(has(simulation::validate(scenario({P(0, 0), P(5, 1), P(5, 10), P(0, 10)})),
-              ErrorCode::NoBaseEdge));
+    CHECK(has(simulation::validate(scenario({P(0, 0), P(5, 1), P(5, 10), P(0, 10)})), ErrorCode::NoBaseEdge));
 }
 
 TEST_CASE("more than one base edge is rejected", "[FR-02][G-05][V-01]") {
@@ -123,16 +121,14 @@ TEST_CASE("a vertex below the base is rejected", "[FR-02][G-05][V-01]") {
 
 TEST_CASE("an upstream face that dips is rejected", "[FR-02][G-06][V-01]") {
     // From the crest (2,10) the face goes down to (3,4) and then back up to (0,8).
-    const auto errors = simulation::validate(
-        scenario({P(0, 0), P(8, 0), P(8, 10), P(2, 10), P(3, 4), P(0, 8)}));
+    const auto errors =
+        simulation::validate(scenario({P(0, 0), P(8, 0), P(8, 10), P(2, 10), P(3, 4), P(0, 8)}));
     REQUIRE(errors.size() == 1);
     CHECK(errors[0].code == ErrorCode::UpstreamFaceDips);
 }
 
 TEST_CASE("a stepped but non-decreasing upstream face is accepted", "[FR-02][G-06]") {
-    CHECK(simulation::validate(
-              scenario({P(0, 0), P(8, 0), P(8, 10), P(2, 10), P(2, 5), P(0, 5)}))
-              .empty());
+    CHECK(simulation::validate(scenario({P(0, 0), P(8, 0), P(8, 10), P(2, 10), P(2, 5), P(0, 5)})).empty());
 }
 
 // ---- numeric sanity -------------------------------------------------------
