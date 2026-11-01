@@ -25,7 +25,7 @@ Process: each design phase is a gate (documents in `docs/`); implementation is t
 | S7 (done) | Hardening: traceability script, coverage report, performance check, N-04 negative build test, JSON schema document, P-05 property test | FR-19, NFR-06, NFR-07, NFR-08 |
 
 ## Later (not scheduled)
-- v1.1 tailwater and uplift: **in implementation** (increment accepted 2026-11-01; `docs/09`, ADR-0008, test plan section 11). Slices: U1 data model and validation (done), U2 `TailwaterLoad`, U3 `UpliftLoad` and pipeline, U4 JSON schema 2; U5 cracked-base iteration stays deferred.
+- v1.1 tailwater and uplift: **in implementation** (increment accepted 2026-11-01; `docs/09`, ADR-0008, test plan section 11). Slices: U1 data model and validation (done), U2 `TailwaterLoad` (done), U3 `UpliftLoad` and pipeline, U4 JSON schema 2; U5 cracked-base iteration stays deferred.
 - v1.x: cohesion in sliding (split from uplift, own increment).
 - Lint the tests too: three tidy findings remain in `tests/io/test_json.cpp` (tests are not linted; `format-tidy` is blocking on non-test sources).
 - Visualization front end (`hp_viz`) consuming `Result`.
@@ -51,7 +51,7 @@ S7 delivered:
 - P-05 (1500 seeded random sections, independent oracles: Fx = 1/2 rho g Hw^2, wedge area and centroid, shoelace weight, Simpson-integrated contact force and moment) and N-01 (1000 bitwise-identical repeats). A mutation check on `WaterLoad`, `SelfWeight` and the contact formulas showed all five mutants caught after two oracles were added for the water force positions.
 - `docs/07-json-schema.md` (FR-19), including the stable error-code names, now covered by tests.
 
-**Next:** slice U2 of the tailwater and uplift increment (`TailwaterLoad`, test first). U1 delivered `Scenario::tailwater_depth`, `Scenario::uplift` (`Uplift`, `Drains`), `DamSection::downstream_face()` and the validation rules with six new error codes; FR-22 is now in `02-requirements.md`. 175 tests pass.
+**Next:** slice U3 of the tailwater and uplift increment (`UpliftLoad` and pipeline integration, test first). U2 delivered `TailwaterLoad` (registered in `Analyzer::with_default_loads`; it emits nothing without a tailwater depth) and `FaceLoad`, the closed-form face integration now shared with `WaterLoad` (v1 results are bit-identical; the golden file is unchanged); FR-23 is in `02-requirements.md`. U1 delivered `Scenario::tailwater_depth`, `Scenario::uplift` (`Uplift`, `Drains`), `DamSection::downstream_face()` and the validation rules with six new error codes; FR-22 is now in `02-requirements.md`. 184 tests pass.
 
 ## Open items
 - The USACE criteria come from a third-party scan of EM 1110-2-2200 (1995); re-verify against the official publication before any compliance claim (decision R3).

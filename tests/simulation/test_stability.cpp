@@ -445,3 +445,44 @@ TEST_CASE("R-03 a force through the toe has no moment and a neutral role", "[FR-
     CHECK(report.terms[0].arm.meters == 0.0);
     CHECK_FALSE(report.ratio.has_value());
 }
+
+// ---- tailwater through the whole pipeline (v1.1, FR-23, FR-26; AU-2 without its uplift) ----------
+//
+// AC-1 dam with 3 m of tailwater: Fx = 490 500 - 44 145 = 446 355 N/m; the tailwater moment about the
+// toe is +44 145 (a force towards the upstream side, 1 m above the base, resists overturning).
+// M = 2 937 500 - 1 635 000 + 44 145 = 1 346 645; x_R = M / V = 1 346 645 / 1 175 000 = 1.14608 m;
+// sliding FS = 1 175 000 tan 35 / 446 355 = 1.84325.
+
+TEST_CASE("FR-23 tailwater reduces the horizontal force and the overturning moment",
+          "[FR-23][FR-26][TW-03]") {
+    Scenario s = ac1();
+    s.tailwater_depth = Length(3.0);
+    const Result r = run(s);
+    CHECK_THAT(r.resultant.vertical.n_per_m, WithinRel(1175000.0, 1e-12));
+    CHECK_THAT(r.resultant.horizontal.n_per_m, WithinRel(446355.0, 1e-12));
+    CHECK_THAT(r.resultant.moment_about_toe.n_m_per_m, WithinRel(1346645.0, 1e-12));
+    REQUIRE(r.resultant.x_from_toe.has_value());
+    CHECK_THAT(r.resultant.x_from_toe->meters, WithinRel(1.14608, 1e-5));
+    REQUIRE(r.sliding.factor_of_safety.has_value());
+    CHECK_THAT(*r.sliding.factor_of_safety, WithinRel(1.84325, 1e-5));
+}
+
+TEST_CASE("FR-23 the overturning report lists the tailwater term as resisting", "[FR-23][FR-27][TW-03]") {
+    Scenario s = ac1();
+    s.tailwater_depth = Length(3.0);
+    const Result r = run(s);
+    bool found = false;
+    for (const ForceContribution& c : r.contributions) {
+        if (c.source == "tailwater (horizontal)") found = true;
+    }
+    CHECK(found);
+    // Uplift is not modelled yet in this slice, so the v1 warning stays.
+    REQUIRE(r.warnings.size() == 1);
+}
+
+TEST_CASE("NFR-12 a scenario without tailwater gives exactly the v1 contributions", "[NFR-12][TW-03]") {
+    const Result r = run(ac1());
+    REQUIRE(r.contributions.size() == 2);
+    CHECK(r.contributions[0].source == "water (horizontal)");
+    CHECK(r.contributions[1].source == "self weight");
+}
