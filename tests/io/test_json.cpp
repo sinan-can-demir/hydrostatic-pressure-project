@@ -130,11 +130,11 @@ TEST_CASE("I-02 schema_version is required and must be supported", "[FR-19][I-02
     REQUIRE_FALSE(missing.has_value());
     CHECK(has(missing.error(), io::IoErrorCode::MissingField, "schema_version"));
 
-    auto future = io::parse_scenario(with("schema_version", 2));
+    auto future = io::parse_scenario(with("schema_version", 3));
     REQUIRE_FALSE(future.has_value());
     REQUIRE(future.error().size() == 1);
     CHECK(future.error()[0].code == io::IoErrorCode::UnsupportedSchemaVersion);
-    CHECK(future.error()[0].message.find("2") != std::string::npos);
+    CHECK(future.error()[0].message.find("3") != std::string::npos);
 
     auto wrong = io::parse_scenario(with("schema_version", "1"));
     CHECK(has(wrong.error(), io::IoErrorCode::WrongType, "schema_version"));
@@ -283,4 +283,168 @@ TEST_CASE("I-02 a string field given a non-string is a type error", "[FR-17][I-0
               "load_condition"));
     CHECK(has(io::parse_scenario(with("criteria", nlohmann::json{{"preset", 1}})).error(),
               io::IoErrorCode::WrongType, "criteria.preset"));
+}
+
+// ---- I-06 / I-07 schema version 2: tailwater and uplift (FR-31) ------------------------------------
+
+namespace {
+
+// The AC-1 document as schema version 2 with the given extra members.
+std::string v2(const nlohmann::json& extra = nlohmann::json::object()) {
+    nlohmann::json j = nlohmann::json::parse(read_file("ac1_scenario.json"));
+    j["schema_version"] = 2;
+    for (const auto& item : extra.items()) j[item.key()] = item.value();
+    return j.dump();
+}
+
+Scenario au3() {
+    Scenario s = ac1();
+    s.uplift = model::Uplift{model::Drains{0.5, Length(1.0), Length(0.0)}};
+    return s;
+}
+
+} // namespace
+
+TEST_CASE("I-06 version 2 without the new keys is the same scenario as version 1", "[FR-31][FR-19][I-06]") {
+    const auto one = io::parse_scenario(read_file("ac1_scenario.json"));
+    const auto two = io::parse_scenario(v2());
+    REQUIRE(one.has_value());
+    REQUIRE(two.has_value());
+    CHECK(*one == *two);
+    CHECK_FALSE(two->tailwater_depth.has_value());
+    CHECK_FALSE(two->uplift.has_value());
+}
+
+TEST_CASE("I-06 the new keys are unknown in a version 1 document", "[FR-31][FR-19][NFR-12][I-06]") {
+    CHECK(has(io::parse_scenario(with("tailwater_depth_m", 3)).error(), io::IoErrorCode::UnknownField,
+              "tailwater_depth_m"));
+    CHECK(has(io::parse_scenario(with("uplift", nlohmann::json::object())).error(),
+              io::IoErrorCode::UnknownField, "uplift"));
+}
+
+TEST_CASE("I-06 version 2 reads tailwater depth and uplift", "[FR-31][I-06]") {
+    const auto r = io::parse_scenario(
+        v2({{"tailwater_depth_m", 3.0},
+            {"uplift", {{"drains", {{"effectiveness", 0.5}, {"distance_from_heel_m", 1.0}}}}}}));
+    REQUIRE(r.has_value());
+    REQUIRE(r->tailwater_depth.has_value());
+    CHECK(r->tailwater_depth->meters == 3.0);
+    REQUIRE(r->uplift.has_value());
+    REQUIRE(r->uplift->drains.has_value());
+    CHECK(r->uplift->drains->effectiveness == 0.5);
+    CHECK(r->uplift->drains->distance_from_heel.meters == 1.0);
+    CHECK(r->uplift->drains->gallery_elevation.meters == 0.0); // optional, default 0
+}
+
+TEST_CASE("I-06 an empty uplift object requests undrained uplift; null means none", "[FR-31][I-06]") {
+    const auto empty = io::parse_scenario(v2({{"uplift", nlohmann::json::object()}}));
+    REQUIRE(empty.has_value());
+    REQUIRE(empty->uplift.has_value());
+    CHECK_FALSE(empty->uplift->drains.has_value());
+
+    const auto nulls = io::parse_scenario(v2({{"uplift", nullptr}, {"tailwater_depth_m", nullptr}}));
+    REQUIRE(nulls.has_value());
+    CHECK_FALSE(nulls->uplift.has_value());
+    CHECK_FALSE(nulls->tailwater_depth.has_value());
+
+    const auto no_drains = io::parse_scenario(v2({{"uplift", {{"drains", nullptr}}}}));
+    REQUIRE(no_drains.has_value());
+    CHECK_FALSE(no_drains->uplift->drains.has_value());
+}
+
+TEST_CASE("I-06 the gallery elevation is read when given", "[FR-31][I-06]") {
+    const auto r = io::parse_scenario(
+        v2({{"uplift",
+             {{"drains",
+               {{"effectiveness", 0.4}, {"distance_from_heel_m", 0.5}, {"gallery_elevation_m", 2.5}}}}}}));
+    REQUIRE(r.has_value());
+    CHECK(r->uplift->drains->gallery_elevation.meters == 2.5);
+}
+
+TEST_CASE("I-06 malformed uplift input is named by path", "[FR-31][I-06][I-02]") {
+    CHECK(has(io::parse_scenario(v2({{"tailwater_depth_m", "3"}})).error(), io::IoErrorCode::WrongType,
+              "tailwater_depth_m"));
+    CHECK(has(io::parse_scenario(v2({{"uplift", 5}})).error(), io::IoErrorCode::WrongType, "uplift"));
+    CHECK(has(io::parse_scenario(v2({{"uplift", {{"drain", nlohmann::json::object()}}}})).error(),
+              io::IoErrorCode::UnknownField, "uplift.drain"));
+    CHECK(has(io::parse_scenario(v2({{"uplift", {{"drains", 1}}}})).error(), io::IoErrorCode::WrongType,
+              "uplift.drains"));
+    // Drains have no default effectiveness or distance (decision D-U2).
+    const auto missing = io::parse_scenario(v2({{"uplift", {{"drains", nlohmann::json::object()}}}}));
+    REQUIRE_FALSE(missing.has_value());
+    CHECK(has(missing.error(), io::IoErrorCode::MissingField, "uplift.drains.effectiveness"));
+    CHECK(has(missing.error(), io::IoErrorCode::MissingField, "uplift.drains.distance_from_heel_m"));
+    CHECK(has(io::parse_scenario(
+                  v2({{"uplift",
+                       {{"drains", {{"effectiveness", 0.5}, {"distance_from_heel_m", 1}, {"typo", 1}}}}}}))
+                  .error(),
+              io::IoErrorCode::UnknownField, "uplift.drains.typo"));
+}
+
+TEST_CASE("I-06 a scenario without the new inputs still writes version 1 with no new keys",
+          "[FR-31][NFR-12][I-06]") {
+    const auto j = nlohmann::json::parse(io::result_to_json(*simulation::analyze(ac1())));
+    CHECK(j["schema_version"] == 1);
+    CHECK_FALSE(j.contains("uplift_pressure"));
+    CHECK_FALSE(j["input"].contains("tailwater_depth_m"));
+    CHECK_FALSE(j["input"].contains("uplift"));
+}
+
+TEST_CASE("I-06 a scenario with the new inputs writes version 2, uplift samples and the new contributions",
+          "[FR-30][FR-31][I-06]") {
+    Scenario s = au3();
+    s.tailwater_depth = Length(0.0);
+    const auto j = nlohmann::json::parse(io::result_to_json(*simulation::analyze(s)));
+    CHECK(j["schema_version"] == 2);
+    CHECK(j["input"]["schema_version"] == 2);
+    CHECK(j["input"]["tailwater_depth_m"] == 0.0);
+    CHECK(j["input"]["uplift"]["drains"]["effectiveness"] == 0.5);
+    CHECK(j["input"]["uplift"]["drains"]["gallery_elevation_m"] == 0.0);
+    REQUIRE(j["uplift_pressure"].size() == 3);
+    CHECK(j["uplift_pressure"][1]["x_m"] == 1.0);
+    CHECK_THAT(j["uplift_pressure"][1]["pressure_pa"].get<double>(), WithinRel(39240.0, 1e-12));
+    bool found = false;
+    for (const auto& c : j["contributions"]) found = found || c["source"] == "uplift";
+    CHECK(found);
+}
+
+TEST_CASE("I-06 absent version 2 values are written as null", "[FR-31][I-06]") {
+    Scenario s = ac1();
+    s.uplift = model::Uplift{}; // undrained uplift, no tailwater
+    const auto j = nlohmann::json::parse(io::result_to_json(*simulation::analyze(s)));
+    CHECK(j["input"]["tailwater_depth_m"].is_null());
+    CHECK(j["input"]["uplift"]["drains"].is_null());
+}
+
+TEST_CASE("I-06 the echoed version 2 input reproduces the result", "[FR-31][NFR-03][I-06]") {
+    for (const bool drained : {false, true}) {
+        Scenario s = ac1();
+        s.tailwater_depth = Length(3.0);
+        s.uplift =
+            model::Uplift{drained ? std::optional<model::Drains>(model::Drains{0.4, Length(0.7), Length(1.5)})
+                                  : std::nullopt};
+        const auto first = simulation::analyze(s);
+        REQUIRE(first.has_value());
+        const auto j = nlohmann::json::parse(io::result_to_json(*first));
+        const auto reparsed = io::parse_scenario(j["input"].dump());
+        REQUIRE(reparsed.has_value());
+        CHECK(*reparsed == s);
+        CHECK(*simulation::analyze(*reparsed) == *first);
+        const auto back = io::parse_scenario(io::scenario_to_json(s));
+        REQUIRE(back.has_value());
+        CHECK(*back == s);
+    }
+}
+
+TEST_CASE("I-07 the AU-3 result JSON equals the stored golden file", "[FR-31][I-07]") {
+    const auto parsed = io::parse_scenario(read_file("au3_scenario.json"));
+    REQUIRE(parsed.has_value());
+    CHECK(*parsed == au3());
+    const auto result = simulation::analyze(*parsed);
+    REQUIRE(result.has_value());
+    const std::string text = io::result_to_json(*result);
+    if (std::getenv("HP_UPDATE_GOLDEN") != nullptr) {
+        std::ofstream(kDataDir + "/au3_result.json", std::ios::binary) << text;
+    }
+    CHECK(text == read_file("au3_result.json"));
 }

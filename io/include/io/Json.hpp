@@ -1,6 +1,6 @@
 /**
  * @file Json.hpp
- * @brief JSON scenario reading and result writing, schema version 1 (FR-17, FR-19).
+ * @brief JSON scenario reading and result writing, schema versions 1 and 2 (FR-17, FR-19, FR-31).
  *
  * Keys carry their unit as a suffix. Unknown keys are rejected so typos are not silently
  * ignored. The JSON library stays inside the implementation: no exception and no JSON type
@@ -20,7 +20,10 @@
 
 namespace io {
 
-inline constexpr int kSchemaVersion = 1;
+// Version 2 adds tailwater and uplift (docs/09). Both versions are read; a result is written as
+// version 2 only when the scenario uses the new inputs, so version 1 scenarios keep their exact
+// output (NFR-12).
+inline constexpr int kSchemaVersion = 2;
 
 // Every structural problem found is returned, not just the first. Meaning (ranges, geometry)
 // is checked later by simulation::validate().

@@ -20,8 +20,23 @@
 #include <vector>
 
 #include "Load.hpp"
+#include "math/Point2.hpp"
+#include "units/Length.hpp"
+#include "units/Pressure.hpp"
 
 namespace simulation {
+
+// One break point of the uplift pressure diagram: section x and the water pressure there.
+struct UpliftSample {
+    bool operator==(const UpliftSample&) const = default;
+    units::Length x;
+    units::Pressure pressure;
+};
+
+// The diagram's break points from heel to toe (heel, the drain line if the bilinear rule applies,
+// toe), so a straight line between neighbours reproduces the diagram exactly (FR-30). Empty when the
+// scenario has no `uplift` request.
+std::vector<UpliftSample> uplift_diagram(const model::Scenario& scenario);
 
 class UpliftLoad final : public Load {
 public:

@@ -617,3 +617,10 @@ TEST_CASE("N-05 v1 scenarios are unchanged with the uplift and tailwater loads r
     REQUIRE(r.warnings.size() == 1);
     CHECK(r.warnings[0] == "uplift not modelled; results are unconservative for real dams");
 }
+
+TEST_CASE("UP-10 the result carries the uplift samples only when uplift is modelled", "[FR-30][UP-10]") {
+    CHECK(run(ac1()).uplift_pressure.empty());
+    const Result r = run(with_uplift(ac1(), model::Drains{0.5, Length(1.0), Length(0.0)}));
+    REQUIRE(r.uplift_pressure.size() == 3);
+    CHECK_THAT(r.uplift_pressure[1].pressure.pascals, WithinRel(39240.0, 1e-12));
+}
