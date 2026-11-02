@@ -38,14 +38,17 @@ TEST_CASE("criteria preset equals EM 1110-2-2200 Table 4-1", "[FR-13]") {
     const model::CriteriaRow usual = usace.row_for(model::LoadCondition::Usual);
     CHECK(usual.zone == model::ResultantZone::MiddleThird);
     CHECK(usual.min_sliding_fs == 2.0);
+    CHECK(usual.bearing_factor == 1.0); // bearing <= allowable
 
     const model::CriteriaRow unusual = usace.row_for(model::LoadCondition::Unusual);
     CHECK(unusual.zone == model::ResultantZone::MiddleHalf);
     CHECK(unusual.min_sliding_fs == 1.7);
+    CHECK(unusual.bearing_factor == 1.0);
 
     const model::CriteriaRow extreme = usace.row_for(model::LoadCondition::Extreme);
     CHECK(extreme.zone == model::ResultantZone::WithinBase);
     CHECK(extreme.min_sliding_fs == 1.3);
+    CHECK(extreme.bearing_factor == 1.33); // bearing <= 1.33 x allowable (Table 4-1)
 }
 
 namespace {

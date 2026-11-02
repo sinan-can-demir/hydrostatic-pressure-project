@@ -38,6 +38,7 @@ struct SlidingCheck {
 };
 
 // Skipped when no allowable pressure was supplied; a skipped check never fails the verdict.
+// `allowable` is the limit applied: the user's allowable times the condition's bearing factor.
 struct BearingCheck {
     bool operator==(const BearingCheck&) const = default;
 
@@ -56,7 +57,8 @@ struct Checks {
 
 LocationCheck check_location(const Resultant& resultant, const Contact& contact, model::ResultantZone zone);
 SlidingCheck check_sliding(const SlidingResult& sliding, double minimum_fs);
-BearingCheck check_bearing(const Contact& contact, std::optional<units::Pressure> allowable);
+BearingCheck check_bearing(const Contact& contact, std::optional<units::Pressure> allowable,
+                           double bearing_factor);
 Verdict make_verdict(const Checks& checks);
 
 } // namespace simulation

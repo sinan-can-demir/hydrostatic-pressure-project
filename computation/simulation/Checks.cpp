@@ -26,11 +26,13 @@ SlidingCheck check_sliding(const SlidingResult& sliding, double minimum_fs) {
     return {pass ? CheckStatus::Pass : CheckStatus::Fail, sliding.factor_of_safety, minimum_fs};
 }
 
-BearingCheck check_bearing(const Contact& contact, std::optional<units::Pressure> allowable) {
+BearingCheck check_bearing(const Contact& contact, std::optional<units::Pressure> allowable,
+                           double bearing_factor) {
     const units::Pressure max_pressure(std::max(contact.toe_pressure.pascals, contact.heel_pressure.pascals));
     if (!allowable) return {CheckStatus::Skipped, max_pressure, std::nullopt};
-    const bool pass = contact.state != ContactState::None && max_pressure.pascals <= allowable->pascals;
-    return {pass ? CheckStatus::Pass : CheckStatus::Fail, max_pressure, allowable};
+    const units::Pressure limit(allowable->pascals * bearing_factor);
+    const bool pass = contact.state != ContactState::None && max_pressure.pascals <= limit.pascals;
+    return {pass ? CheckStatus::Pass : CheckStatus::Fail, max_pressure, limit};
 }
 
 Verdict make_verdict(const Checks& checks) {

@@ -448,3 +448,22 @@ TEST_CASE("I-07 the AU-3 result JSON equals the stored golden file", "[FR-31][I-
     }
     CHECK(text == read_file("au3_result.json"));
 }
+
+// ---- bearing factor (Table 4-1: extreme condition allows 1.33 x the allowable pressure) -------------
+
+TEST_CASE("I-03 the bearing check reports the limit applied; the factor is not a JSON key",
+          "[FR-14][FR-19][I-03]") {
+    Scenario s = ac1();
+    s.water_level = model::WaterLevel{Length(6.0)};
+    s.condition = model::LoadCondition::Extreme;
+    s.foundation.allowable_bearing = Pressure(250000.0); // maximum pressure is 319 758 Pa
+    const auto j = nlohmann::json::parse(io::result_to_json(*simulation::analyze(s)));
+    CHECK(j["checks"]["bearing"]["status"] == "pass");
+    CHECK_THAT(j["checks"]["bearing"]["allowable_pa"].get<double>(), WithinRel(332500.0, 1e-12));
+    CHECK(j["input"]["allowable_bearing_pa"] == 250000.0); // the input is echoed unchanged
+    CHECK_FALSE(j["input"]["criteria"]["extreme"].contains("bearing_factor"));
+
+    CHECK(has(
+        io::parse_scenario(with("criteria", nlohmann::json{{"extreme", {{"bearing_factor", 1.0}}}})).error(),
+        io::IoErrorCode::UnknownField, "criteria.extreme.bearing_factor"));
+}

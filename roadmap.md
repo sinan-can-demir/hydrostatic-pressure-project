@@ -54,4 +54,4 @@ S7 delivered:
 **Next:** the v1.1 increment is feature-complete for tier A (U1 to U4: tailwater, uplift, schema 2, golden files, property tests). Open: visualization front end, cohesion in sliding, tier B cracked-base iteration (U5, own ADR), re-verifying the criteria against the official EM 1110-2-2200. U4 delivered JSON schema version 2 (`tailwater_depth_m`, `uplift`; v1 files and output unchanged), `uplift_pressure` samples in `Result`, the AU-3 golden file and property tests UP-05/UP-06; 223 tests pass.
 
 ## Open items
-- The USACE criteria (Table 4-1, Eqs. 4-1 to 4-3, uplift and tailwater rules) were verified against the official EM 1110-2-2200 (30 Jun 1995) on 2026-11-01 (decision R3). One difference remains: the extreme condition allows 1.33 x the allowable bearing pressure (Table 4-1); the engine uses the plain allowable.
+- The USACE criteria (Table 4-1, Eqs. 4-1 to 4-3, uplift and tailwater rules) were verified against the official EM 1110-2-2200 (30 Jun 1995) on 2026-11-01 (decision R3). The one difference found, the 1.33 x allowable bearing pressure in the extreme condition (Table 4-1), is now implemented (FR-14, C-06).
