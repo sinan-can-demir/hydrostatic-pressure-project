@@ -83,6 +83,7 @@ std::expected<Result, std::vector<ValidationError>> Analyzer::run(const model::S
 
     return Result{scenario,
                   WaterLoad{}.pressure(scenario, scenario.pressure_samples),
+                  uplift_diagram(scenario),
                   contributions,
                   resultant,
                   contact,

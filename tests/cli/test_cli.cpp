@@ -60,6 +60,13 @@ TEST_CASE("CLI-01 reads a file and writes the result to stdout", "[FR-17][FR-18]
     CHECK(r.out == read_file(kDataDir + "/ac1_result.json"));
 }
 
+TEST_CASE("CLI-01 a schema version 2 scenario with uplift gives the AU-3 golden result",
+          "[FR-17][FR-31][CLI-01]") {
+    const Outcome r = run({kDataDir + "/au3_scenario.json"});
+    CHECK(r.code == 0);
+    CHECK(r.out == read_file(kDataDir + "/au3_result.json"));
+}
+
 TEST_CASE("CLI-01 reads stdin when no input file or '-' is given", "[FR-17][CLI-01]") {
     const std::string doc = read_file(kAc1);
     const Outcome implicit = run({}, doc);

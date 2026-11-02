@@ -13,6 +13,7 @@
 #include "ForceContribution.hpp"
 #include "PressureDistribution.hpp"
 #include "Resultant.hpp"
+#include "UpliftLoad.hpp"
 #include "model/Scenario.hpp"
 
 namespace simulation {
@@ -22,6 +23,7 @@ struct Result {
 
     model::Scenario scenario;
     PressureDistribution pressure;
+    std::vector<UpliftSample> uplift_pressure; // empty unless uplift is modelled (FR-30)
     std::vector<ForceContribution> contributions;
     Resultant resultant;
     Contact contact;

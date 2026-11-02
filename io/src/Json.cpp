@@ -133,6 +133,33 @@ void read_criteria(Reader& r, const json& value, model::CriteriaSet& criteria) {
         read_row(r, *v, "criteria.extreme", criteria.extreme);
 }
 
+// `uplift` (v2): an object, optionally holding `drains` with effectiveness and distance required.
+void read_uplift(Reader& r, const json& value, std::optional<model::Uplift>& out) {
+    const std::string path = "uplift";
+    if (value.is_null()) return;
+    if (!r.object(value, path)) return;
+    r.reject_unknown(value, path, {"drains"});
+    out = model::Uplift{};
+    const json* d = r.member(value, path, "drains", false);
+    if (d == nullptr || d->is_null()) return;
+    const std::string dpath = "uplift.drains";
+    if (!r.object(*d, dpath)) return;
+    r.reject_unknown(*d, dpath, {"effectiveness", "distance_from_heel_m", "gallery_elevation_m"});
+    model::Drains drains{0.0, units::Length(0.0)};
+    if (const json* v = r.member(*d, dpath, "effectiveness", true)) {
+        if (auto n = r.number(*v, "uplift.drains.effectiveness")) drains.effectiveness = *n;
+    }
+    if (const json* v = r.member(*d, dpath, "distance_from_heel_m", true)) {
+        if (auto n = r.number(*v, "uplift.drains.distance_from_heel_m"))
+            drains.distance_from_heel = units::Length(*n);
+    }
+    if (const json* v = r.member(*d, dpath, "gallery_elevation_m", false)) {
+        if (auto n = r.number(*v, "uplift.drains.gallery_elevation_m"))
+            drains.gallery_elevation = units::Length(*n);
+    }
+    out->drains = drains;
+}
+
 void read_vertices(Reader& r, const json& dam, std::vector<math::Point2>& out) {
     const std::string path = "dam.vertices_m";
     const json* list = r.member(dam, "dam", "vertices_m", true);
@@ -225,12 +252,25 @@ ojson row_to_json(const model::CriteriaRow& row) {
     return {{"zone", name_of(row.zone)}, {"min_sliding_fs", row.min_sliding_fs}};
 }
 
+// Version 2 only when the scenario uses tailwater or uplift; version 1 output is then unchanged.
+int version_of(const model::Scenario& s) { return s.tailwater_depth || s.uplift ? 2 : 1; }
+
+ojson uplift_value(const std::optional<model::Uplift>& u) {
+    if (!u) return nullptr;
+    if (!u->drains) return {{"drains", nullptr}};
+    const model::Drains& d = *u->drains;
+    return {{"drains",
+             {{"effectiveness", d.effectiveness},
+              {"distance_from_heel_m", d.distance_from_heel.meters},
+              {"gallery_elevation_m", d.gallery_elevation.meters}}}};
+}
+
 ojson scenario_value(const model::Scenario& s) {
     ojson vertices = ojson::array();
     for (const math::Point2& p : s.section.vertices) vertices.push_back({p.x.meters, p.y.meters});
 
     ojson j;
-    j["schema_version"] = kSchemaVersion;
+    j["schema_version"] = version_of(s);
     j["dam"] = {{"vertices_m", vertices}};
     j["water_level_m"] = s.water_level.elevation.meters;
     j["friction_angle_deg"] = degrees_for(s.foundation.friction_angle);
@@ -243,6 +283,10 @@ ojson scenario_value(const model::Scenario& s) {
                      {"unusual", row_to_json(s.criteria.unusual)},
                      {"extreme", row_to_json(s.criteria.extreme)}};
     j["pressure_samples"] = s.pressure_samples ? ojson(*s.pressure_samples) : ojson(nullptr);
+    if (version_of(s) >= 2) {
+        j["tailwater_depth_m"] = s.tailwater_depth ? ojson(s.tailwater_depth->meters) : ojson(nullptr);
+        j["uplift"] = uplift_value(s.uplift);
+    }
     return j;
 }
 
@@ -266,16 +310,25 @@ std::expected<model::Scenario, std::vector<IoError>> parse_scenario(std::string_
         r.add(IoErrorCode::WrongType, "schema_version", "expected an integer");
         return std::unexpected(std::move(r.errors));
     }
-    if (version->get<long long>() != kSchemaVersion) {
+    const long long file_version = version->get<long long>();
+    if (file_version != 1 && file_version != kSchemaVersion) {
         r.add(IoErrorCode::UnsupportedSchemaVersion, "schema_version",
-              "schema_version " + std::to_string(version->get<long long>()) +
-                  " is not supported; this tool reads version " + std::to_string(kSchemaVersion));
+              "schema_version " + std::to_string(file_version) +
+                  " is not supported; this tool reads versions 1 to " + std::to_string(kSchemaVersion));
         return std::unexpected(std::move(r.errors));
     }
 
-    r.reject_unknown(root, "",
-                     {"schema_version", "dam", "water_level_m", "friction_angle_deg", "load_condition",
-                      "fluid", "concrete", "allowable_bearing_pa", "criteria", "pressure_samples"});
+    // Tailwater and uplift exist from version 2; in a version 1 document they are unknown keys.
+    if (file_version >= 2) {
+        r.reject_unknown(root, "",
+                         {"schema_version", "dam", "water_level_m", "friction_angle_deg", "load_condition",
+                          "fluid", "concrete", "allowable_bearing_pa", "criteria", "pressure_samples",
+                          "tailwater_depth_m", "uplift"});
+    } else {
+        r.reject_unknown(root, "",
+                         {"schema_version", "dam", "water_level_m", "friction_angle_deg", "load_condition",
+                          "fluid", "concrete", "allowable_bearing_pa", "criteria", "pressure_samples"});
+    }
 
     model::DamSection section;
     if (const json* dam = r.member(root, "", "dam", true); dam != nullptr && r.object(*dam, "dam")) {
@@ -327,6 +380,15 @@ std::expected<model::Scenario, std::vector<IoError>> parse_scenario(std::string_
         }
     }
 
+    std::optional<units::Length> tailwater;
+    std::optional<model::Uplift> uplift;
+    if (file_version >= 2) {
+        if (const json* v = r.member(root, "", "tailwater_depth_m", false); v != nullptr && !v->is_null()) {
+            if (auto n = r.number(*v, "tailwater_depth_m")) tailwater = units::Length(*n);
+        }
+        if (const json* v = r.member(root, "", "uplift", false)) read_uplift(r, *v, uplift);
+    }
+
     if (!r.errors.empty()) return std::unexpected(std::move(r.errors));
 
     model::Scenario scenario{.section = std::move(section),
@@ -337,7 +399,9 @@ std::expected<model::Scenario, std::vector<IoError>> parse_scenario(std::string_
                              .fluid = fluid,
                              .concrete = concrete,
                              .criteria = criteria,
-                             .pressure_samples = samples};
+                             .pressure_samples = samples,
+                             .tailwater_depth = tailwater,
+                             .uplift = uplift};
     return scenario;
 }
 
@@ -349,7 +413,7 @@ std::string result_to_json(const simulation::Result& r) {
     using simulation::Result;
 
     ojson j;
-    j["schema_version"] = kSchemaVersion;
+    j["schema_version"] = version_of(r.scenario);
     j["input"] = scenario_value(r.scenario);
 
     ojson pressure = ojson::array();
@@ -360,6 +424,14 @@ std::string result_to_json(const simulation::Result& r) {
                             {"normal", {s.normal.x.meters, s.normal.y.meters}}});
     }
     j["pressure"] = pressure;
+
+    if (!r.uplift_pressure.empty()) {
+        ojson uplift = ojson::array();
+        for (const simulation::UpliftSample& u : r.uplift_pressure) {
+            uplift.push_back({{"x_m", u.x.meters}, {"pressure_pa", u.pressure.pascals}});
+        }
+        j["uplift_pressure"] = uplift;
+    }
 
     ojson contributions = ojson::array();
     for (const simulation::ForceContribution& c : r.contributions) {

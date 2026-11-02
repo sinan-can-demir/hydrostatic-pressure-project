@@ -176,7 +176,7 @@ AU-4 (cracked base) is reserved for tier B. Cases AU-1, AU-2 and AU-3 also have 
 | Loads | UP-03 | `UpliftLoad` with drains: drain-line head H3 for H4 > H2 and H4 < H2 (gallery rule); AU-3 | FR-24, FR-25 |
 | Loads | UP-04 | Drains within 0.05 H1 of the upstream face use the single-line rule (AU-5); X just above and just below the threshold select the two rules | FR-24 |
 | Property | UP-05 | Random valid sections and drain data: the uplift force and moment equal an independent numerical integration of the diagram (as P-05) | FR-24 |
-| Property | UP-06 | Monotonicity: more drain effectiveness never increases U; higher tailwater never increases U | FR-24, FR-25 |
+| Property | UP-06 | Monotonicity: more drain effectiveness never increases U; drains never add uplift unless the gallery is above the tailwater; higher tailwater never decreases U (a higher toe head raises the diagram; corrected in U4 from the first draft, which had the direction wrong) | FR-24, FR-25 |
 | Pipeline | UP-07 | AU-1 to AU-3 and AU-5 through `analyze`: V, H, M, x_R, FS match 11.1; report lists "uplift" and "tailwater" terms with arm, moment and role | FR-26, FR-27 |
 | Warnings | UP-08 | E at 0.24, 0.25, 0.50, 0.51, 0.67, 0.68 produce the documented warnings; E is never altered | FR-25 |
 | Warnings | UP-09 | FR-28: contact length < B adds the unconservative-uplift warning; full contact does not; U > W reports unstable | FR-28 |

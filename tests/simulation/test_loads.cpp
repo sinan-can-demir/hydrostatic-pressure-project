@@ -389,3 +389,44 @@ TEST_CASE("UP-03 the UpliftLoad is deterministic and uses the fluid properties",
     const ForceContribution u = uplift_of(simulation::UpliftLoad{}.contributions(s));
     CHECK_THAT(u.fy.n_per_m, WithinRel(1025.0 * 9.80665 * 15.0, 1e-12));
 }
+
+// ---- uplift pressure samples (FR-30; AC-1 dam, rho g = 9810) ---------------------------------------
+
+TEST_CASE("UP-10 samples without drains are the heel and the toe", "[FR-30][UP-10]") {
+    const auto d = simulation::uplift_diagram(with_uplift(ac1()));
+    REQUIRE(d.size() == 2);
+    CHECK(d[0].x.meters == 0.0);
+    CHECK_THAT(d[0].pressure.pascals, WithinRel(98100.0, 1e-12)); // 9810 * 10
+    CHECK(d[1].x.meters == 5.0);
+    CHECK(d[1].pressure.pascals == 0.0);
+}
+
+TEST_CASE("UP-10 samples with drains include the drain-line point (AU-3)", "[FR-30][UP-10]") {
+    const auto d = simulation::uplift_diagram(with_uplift(ac1(), drains(0.5, 1.0)));
+    REQUIRE(d.size() == 3);
+    CHECK_THAT(d[0].pressure.pascals, WithinRel(98100.0, 1e-12));
+    CHECK(d[1].x.meters == 1.0);
+    CHECK_THAT(d[1].pressure.pascals, WithinRel(9810.0 * 4.0, 1e-12)); // H3 = 4
+    CHECK(d[2].x.meters == 5.0);
+}
+
+TEST_CASE("UP-10 near-heel drains give a heel ordinate of H3 and no drain point (AU-5)", "[FR-30][UP-10]") {
+    const auto d = simulation::uplift_diagram(with_uplift(ac1(), drains(0.5, 0.2)));
+    REQUIRE(d.size() == 2);
+    CHECK_THAT(d[0].pressure.pascals, WithinRel(9810.0 * 5.0, 1e-12));
+    CHECK(d[1].pressure.pascals == 0.0);
+}
+
+TEST_CASE("UP-10 the toe ordinate is the tailwater pressure; x is in section coordinates", "[FR-30][UP-10]") {
+    Scenario s = with_uplift(scenario({P(2, 0), P(7, 0), P(7, 10), P(2, 10)}, 10.0));
+    s.tailwater_depth = Length(3.0);
+    const auto d = simulation::uplift_diagram(s);
+    REQUIRE(d.size() == 2);
+    CHECK(d[0].x.meters == 2.0);
+    CHECK(d[1].x.meters == 7.0);
+    CHECK_THAT(d[1].pressure.pascals, WithinRel(9810.0 * 3.0, 1e-12));
+}
+
+TEST_CASE("UP-10 no uplift request means no samples", "[FR-30][NFR-12][UP-10]") {
+    CHECK(simulation::uplift_diagram(ac1()).empty());
+}

@@ -67,6 +67,8 @@ Notes on the source that affect the design:
 | FR-26 | M | Uplift and tailwater flow through the existing pipeline (resultant, contact, sliding, overturning report, checks) with no change to the downstream formulas; the sliding check uses the reduced V. | AU-1 to AU-3, AU-5 through `analyze`: V, H, M, x_R, FS. |
 | FR-27 | S | The overturning report lists the uplift and tailwater terms with force, arm, moment and role. | Uplift reported as an overturning vertical term; tailwater as resisting. |
 | FR-28 | M | If uplift is modelled and the base is not fully in compression, the result carries a warning that the uplift assumes full contact and is unconservative (D-U1). If V <= 0 after uplift, the existing no-contact path applies and the verdict is fail. | Warning present for partial contact and for U > W; absent for full contact. |
+| FR-30 | S | (v1.1, docs/09) The result includes the uplift pressure diagram as break points from heel to toe (heel, drain line where it applies, toe), usable for plotting (as FR-05 for the face). | Samples match the diagram at heel, drain line, toe (AU-3: 98 100, 39 240, 0 Pa). |
+| FR-31 | M | (v1.1, docs/09) JSON schema version 2: optional `tailwater_depth_m` and `uplift` (with optional `drains`); results carry the new contributions, `uplift_pressure` and warnings. Versions 1 and 2 are accepted; version 1 documents (and scenarios without the new inputs) behave and are written exactly as before. | Round-trip, golden files AC-1 (unchanged) and AU-3, version 3 rejected, new keys rejected in version 1. |
 
 ## 5. Non-functional requirements
 | ID | Pri | Category | Requirement | Verification |
