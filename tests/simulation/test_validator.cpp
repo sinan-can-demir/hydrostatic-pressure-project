@@ -204,6 +204,12 @@ TEST_CASE("fluid, concrete, bearing and criteria values are checked", "[FR-03][F
     const auto fs = simulation::validate(s);
     REQUIRE(has(fs, ErrorCode::NonPositiveSlidingFs));
     CHECK(find(fs, ErrorCode::NonPositiveSlidingFs)->path == "criteria.unusual.min_sliding_fs");
+
+    s = ac1();
+    s.criteria.extreme.bearing_factor = 0.0;
+    const auto bf = simulation::validate(s);
+    REQUIRE(has(bf, ErrorCode::NonPositiveBearingFactor));
+    CHECK(find(bf, ErrorCode::NonPositiveBearingFactor)->path == "criteria.extreme.bearing_factor");
 }
 
 // ---- all errors at once (decision U1) -------------------------------------
@@ -264,6 +270,7 @@ TEST_CASE("every error code has its documented stable name", "[V-01][FR-19]") {
         {ErrorCode::NonPositiveUnitWeight, "non_positive_unit_weight"},
         {ErrorCode::NonPositiveAllowableBearing, "non_positive_allowable_bearing"},
         {ErrorCode::NonPositiveSlidingFs, "non_positive_sliding_fs"},
+        {ErrorCode::NonPositiveBearingFactor, "non_positive_bearing_factor"},
         {ErrorCode::PressureSamplesOutOfRange, "pressure_samples_out_of_range"},
         {ErrorCode::DownstreamFaceRises, "downstream_face_rises"},
         {ErrorCode::TailwaterNegative, "tailwater_negative"},

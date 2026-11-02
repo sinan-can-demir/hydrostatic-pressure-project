@@ -77,9 +77,9 @@ std::expected<Result, std::vector<ValidationError>> Analyzer::run(const model::S
     const Contact contact = make_contact(resultant);
     const SlidingResult sliding = make_sliding(resultant, scenario.foundation.friction_angle);
     const model::CriteriaRow criteria = scenario.criteria.row_for(scenario.condition);
-    const Checks checks{check_location(resultant, contact, criteria.zone),
-                        check_sliding(sliding, criteria.min_sliding_fs),
-                        check_bearing(contact, scenario.foundation.allowable_bearing)};
+    const Checks checks{
+        check_location(resultant, contact, criteria.zone), check_sliding(sliding, criteria.min_sliding_fs),
+        check_bearing(contact, scenario.foundation.allowable_bearing, criteria.bearing_factor)};
 
     return Result{scenario,
                   WaterLoad{}.pressure(scenario, scenario.pressure_samples),

@@ -30,6 +30,7 @@ enum class ErrorCode {
     NonPositiveUnitWeight,
     NonPositiveAllowableBearing,
     NonPositiveSlidingFs,
+    NonPositiveBearingFactor,
     PressureSamplesOutOfRange,
     DownstreamFaceRises,
     TailwaterNegative,
@@ -79,6 +80,8 @@ constexpr std::string_view to_string(ErrorCode code) {
         return "non_positive_allowable_bearing";
     case ErrorCode::NonPositiveSlidingFs:
         return "non_positive_sliding_fs";
+    case ErrorCode::NonPositiveBearingFactor:
+        return "non_positive_bearing_factor";
     case ErrorCode::PressureSamplesOutOfRange:
         return "pressure_samples_out_of_range";
     case ErrorCode::DownstreamFaceRises:

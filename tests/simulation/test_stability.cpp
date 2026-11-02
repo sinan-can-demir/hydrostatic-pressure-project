@@ -294,14 +294,50 @@ TEST_CASE("C-03 a user override of the criteria replaces the preset", "[FR-13][C
     CHECK(run(s).checks.sliding.minimum == 1.7);
 }
 
+namespace {
+Contact none_contact() { return Contact{ContactState::None, Length(0.0), Pressure(0.0), Pressure(0.0)}; }
+} // namespace
+
 TEST_CASE("C-04 bearing check: pass, fail and skipped", "[FR-14][C-04]") {
     const Contact partial{ContactState::Partial, Length(3.0), Pressure(706650.0), Pressure(0.0)};
-    CHECK(check_bearing(partial, Pressure(1.0e6)).status == CheckStatus::Pass);
-    CHECK(check_bearing(partial, Pressure(706650.0)).status == CheckStatus::Pass);
-    CHECK(check_bearing(partial, Pressure(5.0e5)).status == CheckStatus::Fail);
-    CHECK(check_bearing(partial, std::nullopt).status == CheckStatus::Skipped);
+    CHECK(check_bearing(partial, Pressure(1.0e6), 1.0).status == CheckStatus::Pass);
+    CHECK(check_bearing(partial, Pressure(706650.0), 1.0).status == CheckStatus::Pass);
+    CHECK(check_bearing(partial, Pressure(5.0e5), 1.0).status == CheckStatus::Fail);
+    CHECK(check_bearing(partial, std::nullopt, 1.0).status == CheckStatus::Skipped);
     const Contact none{ContactState::None, Length(0.0), Pressure(0.0), Pressure(0.0)};
-    CHECK(check_bearing(none, Pressure(1.0e6)).status == CheckStatus::Fail);
+    CHECK(check_bearing(none, Pressure(1.0e6), 1.0).status == CheckStatus::Fail);
+}
+
+TEST_CASE("C-04 the bearing factor scales the allowable pressure (Table 4-1, extreme: 1.33)",
+          "[FR-14][C-04][C-06]") {
+    const Contact partial{ContactState::Partial, Length(3.0), Pressure(706650.0), Pressure(0.0)};
+    // Limit = 500 000 x factor: 700 000 < 706 650 fails, 750 000 passes.
+    CHECK(check_bearing(partial, Pressure(5.0e5), 1.4).status == CheckStatus::Fail);
+    const BearingCheck ok = check_bearing(partial, Pressure(5.0e5), 1.5);
+    CHECK(ok.status == CheckStatus::Pass);
+    REQUIRE(ok.allowable.has_value());
+    CHECK_THAT(ok.allowable->pascals, WithinRel(750000.0, 1e-12)); // the limit applied
+    // Exactly on the limit passes.
+    CHECK(check_bearing(partial, Pressure(353325.0), 2.0).status == CheckStatus::Pass);
+    CHECK(check_bearing(none_contact(), Pressure(1.0e6), 1.33).status == CheckStatus::Fail);
+    CHECK(check_bearing(partial, std::nullopt, 1.33).status == CheckStatus::Skipped);
+}
+
+TEST_CASE("C-06 only the extreme condition allows 1.33 x the allowable bearing", "[FR-14][C-06]") {
+    // AC-1 at Hw = 6: x_R = 2 584 340 / 1 175 000 = 2.1994 m, e = 0.3006 m, full contact, maximum
+    // pressure 235 000 (1 + 6 e / B) = 319 758 Pa. With allowable 250 000 Pa the limit is 250 000
+    // (usual, unusual: fail) or 332 500 (extreme: pass).
+    for (const auto& [condition, expected] : {std::pair{LoadCondition::Usual, CheckStatus::Fail},
+                                              std::pair{LoadCondition::Unusual, CheckStatus::Fail},
+                                              std::pair{LoadCondition::Extreme, CheckStatus::Pass}}) {
+        Scenario s = ac1(6.0, condition);
+        s.foundation.allowable_bearing = Pressure(250000.0);
+        const Result r = run(s);
+        CHECK(r.checks.bearing.status == expected);
+        REQUIRE(r.checks.bearing.allowable.has_value());
+        CHECK_THAT(r.checks.bearing.allowable->pascals,
+                   WithinRel(condition == LoadCondition::Extreme ? 332500.0 : 250000.0, 1e-12));
+    }
 }
 
 TEST_CASE("C-04 bearing through analyze", "[FR-14][C-04]") {

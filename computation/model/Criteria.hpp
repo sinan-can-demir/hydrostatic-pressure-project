@@ -17,13 +17,16 @@ struct CriteriaRow {
     bool operator==(const CriteriaRow&) const = default;
     ResultantZone zone;
     double min_sliding_fs;
+    // Multiplies the allowable foundation bearing pressure for this condition (Table 4-1: 1.0 for
+    // usual and unusual, 1.33 for extreme). Not a JSON key: it travels with the preset.
+    double bearing_factor = 1.0;
 };
 
 struct CriteriaSet {
     bool operator==(const CriteriaSet&) const = default;
     CriteriaRow usual{ResultantZone::MiddleThird, 2.0};
     CriteriaRow unusual{ResultantZone::MiddleHalf, 1.7};
-    CriteriaRow extreme{ResultantZone::WithinBase, 1.3};
+    CriteriaRow extreme{ResultantZone::WithinBase, 1.3, 1.33};
 
     static constexpr CriteriaSet usace() { return CriteriaSet{}; }
 

@@ -63,6 +63,7 @@ IDs are tags used in test names. Each row lists the behaviours to cover.
 | Resultant | R-03 | Overturning report lists every contribution with arm, moment and role; totals match R-01; ratio unbounded when no overturning moment | FR-11 |
 | Checks | C-01 | Sliding FS; `H = 0` gives "no driving shear" | FR-10 |
 | Checks | C-02 | Boundary behaviour: x_R exactly at B/3 and 2B/3 passes usual; one ulp outside fails; FS exactly at minimum passes, one ulp below fails | FR-12, ADR-0007 |
+| Checks | C-06 | Bearing factor: extreme condition limit is 1.33 x allowable, usual and unusual 1.0; the result reports the limit applied; non-positive factor rejected | FR-14 |
 | Checks | C-03 | Presets equal Table 4-1 for all three conditions; user override replaces them; invalid override rejected | FR-13 |
 | Checks | C-04 | Bearing check: pass, fail, and skipped when not supplied (skipped is not pass) | FR-14, U2 |
 | Checks | C-05 | Overall verdict: FAIL if any check fails; skipped checks do not fail | U2 |
@@ -119,7 +120,7 @@ Per ADR-0007 and NFR-01: reference comparisons use relative error 1e-9 (absolute
 | FR-11 | R-03 |
 | FR-12 | C-02, C-05 |
 | FR-13 | S-01, C-03 |
-| FR-14 | C-04 |
+| FR-14 | C-04, C-06 |
 | FR-15 | W-01 |
 | FR-16 | A-01, A-02 |
 | FR-17 | I-01, I-02, I-03, CLI-01 |

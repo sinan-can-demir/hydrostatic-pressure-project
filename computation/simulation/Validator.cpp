@@ -199,6 +199,12 @@ void validate_parameters(const model::Scenario& s, Errors& errors) {
                       ErrorCode::NonPositiveSlidingFs, "the minimum sliding factor of safety");
     validate_positive(errors, s.criteria.extreme.min_sliding_fs, "criteria.extreme.min_sliding_fs",
                       ErrorCode::NonPositiveSlidingFs, "the minimum sliding factor of safety");
+    validate_positive(errors, s.criteria.usual.bearing_factor, "criteria.usual.bearing_factor",
+                      ErrorCode::NonPositiveBearingFactor, "the bearing factor");
+    validate_positive(errors, s.criteria.unusual.bearing_factor, "criteria.unusual.bearing_factor",
+                      ErrorCode::NonPositiveBearingFactor, "the bearing factor");
+    validate_positive(errors, s.criteria.extreme.bearing_factor, "criteria.extreme.bearing_factor",
+                      ErrorCode::NonPositiveBearingFactor, "the bearing factor");
 
     if (s.pressure_samples && (*s.pressure_samples < 2 || *s.pressure_samples > 100000)) {
         add(errors, ErrorCode::PressureSamplesOutOfRange, "pressure_samples",
