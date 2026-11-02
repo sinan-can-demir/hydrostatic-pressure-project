@@ -119,7 +119,7 @@ Each slice follows the existing process: tests first, exit criteria from `06-tes
 5. Test plan section 11 and ADR-0008 accompany this gate; implementation follows slices U1 to U4, tier B (U5) stays deferred.
 
 ## 10. Risks and open items
-- The source is a third-party scan (R3). The formulas for H3 and the E limits were read from the document; confirm against the official publication before any compliance claim.
+- The formulas for H3, the 0.05 H1 rule and the E limits were checked against the official USACE publication on 2026-11-01 (R3 in `02-requirements.md`) and agree. The 67 percent limit needs approval from CECW-ED.
 - "Drain effectiveness" is defined only by the formula in Fig. 3-2 (K = 1 - E applied to the pressure drop from heel to drain line); the engine uses exactly that definition and reports E and H3 in the result.
 - Figure 3-3 (drains within 0.05 H1 of the upstream face, X <= 0.05 H1) is a **distinct rule, not a limit of the bilinear one**: the heel ordinate itself drops to H3 = K (H1 - H') + H' and the diagram is a single straight line from H3 at the heel to H2 at the toe. It is a requirement (FR-24 covers it) with its own test; reading of the figure text to be re-checked at the test-plan gate.
 - Tier A is unconservative when the base is not fully in compression; mitigated by FR-28 until tier B.
