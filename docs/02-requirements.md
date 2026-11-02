@@ -12,7 +12,7 @@ Priority scale (MoSCoW): **M** must, **S** should, **C** could, **W** won't (v1)
 - **Water:** upstream water level Hw is an elevation above the base (y = Hw). Water acts on the part of the upstream face below Hw.
 
 ## 2. Reference criteria (verified source)
-Source: USACE EM 1110-2-2200 *Gravity Dam Design*, 30 Jun 1995, Table 4-1 "Stability and stress criteria" and Eqs. 4-1 to 4-3 (copy retrieved from damtoolbox.org; maintainer should confirm this edition is the one to cite).
+Source: USACE EM 1110-2-2200 *Gravity Dam Design*, 30 Jun 1995, Table 4-1 "Stability and stress criteria" and Eqs. 4-1 to 4-3 (verified against the official USACE publication on 2026-11-01, see R3).
 
 | Load condition | Resultant location at base | Minimum sliding FS |
 |----------------|----------------------------|--------------------|
@@ -24,7 +24,7 @@ Sliding FS (Eq. 4-3): FS = (N tan(phi) + c L) / T, where N is the normal resulta
 
 Notes on the source that affect the design:
 - EM 1110-2-2200 checks **overturning through resultant location**, not an overturning-moment factor of safety. A moment ratio (resisting/overturning about the toe) is still the classic textbook measure, so v1 reports it as informational only, not as a code criterion.
-- The same table also contains foundation bearing and concrete stress criteria; v1 only reports base pressure and compares against a user-supplied allowable.
+- The same table also contains foundation bearing and concrete stress criteria; v1 only reports base pressure and compares against a user-supplied allowable. Table 4-1 allows **1.33 x allowable** bearing pressure in the extreme condition; the engine applies the plain allowable in every condition, which is stricter for extreme loads (known difference, open item).
 
 ## 3. Assumptions and constraints
 | ID | Statement |
@@ -125,5 +125,5 @@ Expected checks: the usual case fails on resultant location (1.1085 m < 1.6667 m
 |---|----------|--------|
 | R1 | Friction is input as the friction angle phi in degrees, as in EM 1110-2-2200. | FR-10 and the JSON schema use `friction_angle_deg`; mu = tan(phi) is computed internally and reported. |
 | R2 | Clockwise vertex order is rejected with an error message, not normalised. | FR-02. The error message states the detected orientation and expected CCW order. |
-| R3 | The USACE EM 1110-2-2200 (30 Jun 1995) copy retrieved from damtoolbox.org is accepted as the citation source; the owner delegated this judgement to the assistant. | Section 2. Rationale: the 1995 edition is the current published version of the EM as of this draft and the table was read from the document text itself. Residual risk: a third-party scan; re-verify against the official USACE publications site before any release claiming compliance. |
+| R3 | **Verified 2026-11-01** against the official USACE publication (EM 1110-2-2200, 30 Jun 1995, 88 pages, `publications.usace.army.mil/Portals/76/Publications/EngineerManuals/EM_1110-2-2200.pdf`, the same edition the site serves today). The full text of the earlier third-party copy (damtoolbox.org) equals the official text word for word; the official file differs only by OCR text inside figures and appendices. Checked directly in the official file: Table 4-1 (zones middle 1/3, middle 1/2, within base; minimum sliding FS 2.0, 1.7, 1.3), Eqs. 4-1 to 4-3, para. 3-3.c(3) (tailwater, full depth for nonoverflow sections), para. 3-3.d(1) (uplift over 100 percent of the base; drain effectiveness 25 to 50 percent, up to 67 percent with CECW-ED approval; drains within 5 percent of the reservoir depth of the upstream face as one straight line; gallery above tailwater treated as the tailwater for the drain line; zero-compression zones) and the formulas of Figs. 3-2 and 3-3 (viewed as page images). All agree with the implementation. One difference found: extreme-condition bearing is 1.33 x allowable in Table 4-1, not the plain allowable (see section 2). | Section 2, docs/09. Citing the EM is now supported; a compliance claim still needs the engineer of record to confirm the inputs (phi, E, bearing). |
 | R4 | Overturning stays informational, but the output carries every detail (all forces, arms and moments). | FR-11, NFR-09. |
